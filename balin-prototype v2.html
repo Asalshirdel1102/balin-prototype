@@ -1,0 +1,2545 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>بالین — موتور تولید نشانه بالینی</title>
+<style>
+:root{
+  --ink:#16212A;
+  --ink-soft:#3E4C58;
+  --ink-faint:#7A8792;
+  --bone:#E4DFD5;
+  --surface:#F3F0EA;
+  --surface-2:#EAE6DE;
+  --line:#C9C2B5;
+  --indigo:#27476B;
+  --indigo-soft:#5C7EA6;
+  --salmon:#C0504A;
+  --amber:#A8762A;
+  --teal:#3B6B66;
+  --shadow:0 1px 0 rgba(22,33,42,.06), 0 8px 24px -18px rgba(22,33,42,.5);
+  --fa:'Vazirmatn','IRANSans','IRANYekan','Segoe UI',Tahoma,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bone);
+  color:var(--ink);
+  font-family:var(--fa);
+  font-size:15px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font-family:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:700;line-height:1.4}
+
+/* ---------- shell ---------- */
+.shell{max-width:1240px;margin:0 auto;padding:0 20px 64px}
+
+.masthead{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+  padding:26px 0 18px;border-bottom:2px solid var(--ink);flex-wrap:wrap;
+}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand h1{font-size:30px;letter-spacing:-.5px}
+.brand .lat{font-size:13px;color:var(--ink-faint);letter-spacing:.14em;direction:ltr}
+.tagline{font-size:13.5px;color:var(--ink-soft);max-width:44ch;line-height:1.6}
+.build{font-size:12px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+
+/* ---------- claim strip ---------- */
+.claim{
+  margin-top:18px;padding:14px 18px;background:var(--ink);color:#EFEBE3;
+  display:flex;gap:18px;align-items:center;flex-wrap:wrap;border-radius:2px;
+}
+.claim strong{color:#fff}
+.claim .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);flex:none;
+  box-shadow:0 0 0 0 rgba(168,118,42,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(168,118,42,.55)}70%{box-shadow:0 0 0 9px rgba(168,118,42,0)}100%{box-shadow:0 0 0 0 rgba(168,118,42,0)}}
+@media (prefers-reduced-motion:reduce){.claim .dot{animation:none}}
+.claim p{margin:0;font-size:14px;line-height:1.7}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:0;margin:22px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{
+  appearance:none;background:none;border:0;border-bottom:3px solid transparent;
+  padding:12px 18px;font-size:15px;cursor:pointer;color:var(--ink-soft);
+  display:flex;align-items:center;gap:9px;
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--indigo);font-weight:700}
+.tab:focus-visible{outline:2px solid var(--indigo);outline-offset:-3px}
+.tab .ch{font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:2px;padding:1px 6px}
+.tab[aria-selected="true"] .ch{color:var(--indigo);border-color:var(--indigo-soft)}
+
+/* ---------- module layout ---------- */
+.panel{display:none;padding-top:24px}
+.panel.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 330px;gap:22px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
+
+.stage{
+  background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.stage-head{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  padding:11px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);flex-wrap:wrap;
+}
+.stage-head h2{font-size:15px}
+.stage-head .meta{font-size:12.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+.stage-body{padding:16px}
+
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow)}
+.card h3{font-size:13.5px;padding:11px 15px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.card .body{padding:14px 15px}
+
+/* ---------- controls ---------- */
+.cases{display:flex;flex-direction:column;gap:6px}
+.case{
+  text-align:right;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:2px;padding:9px 12px;cursor:pointer;font-size:14px;line-height:1.5;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.case:hover{border-color:var(--indigo-soft)}
+.case:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.case[aria-pressed="true"]{background:var(--indigo);color:#F3F0EA;border-color:var(--indigo)}
+.case .tagi{font-size:11px;opacity:.72}
+
+.knob{margin:0 0 15px}
+.knob:last-child{margin-bottom:0}
+.knob label{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:5px}
+.knob .val{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--indigo);height:22px;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--indigo);outline-offset:3px}
+
+.btn{
+  background:var(--indigo);color:#F3F0EA;border:1px solid var(--indigo);
+  padding:9px 16px;border-radius:2px;font-size:14px;cursor:pointer;
+}
+.btn:hover{background:#1E3A59}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink);background:var(--surface-2)}
+.btn.live{background:var(--salmon);border-color:var(--salmon)}
+.btn.live:hover{background:#A9433D}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+
+.sites{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.site{
+  border:1px solid var(--line);background:var(--surface-2);border-radius:2px;
+  padding:7px 10px;font-size:12.5px;cursor:pointer;line-height:1.4;text-align:center;flex:1 1 auto;
+}
+.site[aria-pressed="true"]{background:var(--ink);color:#EFEBE3;border-color:var(--ink)}
+.site:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+
+/* ---------- bridge (basic science -> sign) ---------- */
+.bridge{list-style:none;margin:0;padding:0;counter-reset:step}
+.bridge li{
+  position:relative;padding:0 30px 14px 0;border-right:1px solid var(--line);
+  margin-right:9px;font-size:13.5px;line-height:1.65;color:var(--ink-soft);
+}
+.bridge li:last-child{padding-bottom:0;border-right-color:transparent}
+.bridge li::before{
+  counter-increment:step;content:counter(step);
+  position:absolute;right:-10px;top:2px;width:20px;height:20px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-faint);
+  font-size:11px;display:grid;place-items:center;font-variant-numeric:tabular-nums;
+}
+.bridge li b{color:var(--ink);font-weight:700}
+.bridge li:last-child b{color:var(--salmon)}
+
+.readout{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:2px;overflow:hidden;
+}
+.readout div{background:var(--surface);padding:8px 10px}
+.readout .k{font-size:11.5px;color:var(--ink-faint);display:block}
+.readout .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+
+.note{font-size:12.5px;color:var(--ink-faint);line-height:1.7;margin:10px 0 0}
+canvas{display:block;max-width:100%}
+
+/* ---------- speech / reaction ---------- */
+.say{
+  background:var(--surface-2);border:1px solid var(--line);border-right:3px solid var(--salmon);
+  padding:10px 13px;border-radius:2px;font-size:14px;min-height:44px;line-height:1.6;
+}
+.say.quiet{border-right-color:var(--teal);color:var(--ink-soft)}
+
+.legend{font-size:12.5px;color:var(--ink-soft);display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+/* ---------- honesty box ---------- */
+.honest{margin-top:32px;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+.honest h3{font-size:14px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.honest .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+@media (max-width:760px){.honest .cols{grid-template-columns:1fr}}
+.honest .col{padding:14px 16px;border-left:1px solid var(--line)}
+.honest .col:last-child{border-left:0}
+.honest h4{margin:0 0 8px;font-size:13px}
+.honest ul{margin:0;padding-right:17px;font-size:13px;color:var(--ink-soft);line-height:1.8}
+.honest .ok h4{color:var(--teal)}
+.honest .approx h4{color:var(--amber)}
+.honest .no h4{color:var(--salmon)}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <div>
+      <div class="brand">
+        <h1>بالین</h1>
+        <span class="lat">BALIN · sign-generation engine</span>
+      </div>
+      <p class="tagline">شبیه‌ساز معاینه بالینی؛ نشانه‌ها از پارامترهای پاتوفیزیولوژیک ساخته می‌شوند، نه از کلیپ ضبط‌شده پخش.</p>
+    </div>
+    <div class="build">نمونه اولیه ۰٫۵ — شش ماژول روی یک موتور</div>
+  </header>
+
+  <div class="claim">
+    <span class="dot" aria-hidden="true"></span>
+    <p>هیچ فایل صوتی یا ویدئویی از پیش ضبط‌شده‌ای در این نمونه وجود ندارد. هر صدا، هر مردمک و هر موج ECG در همان لحظه از روی پارامترها محاسبه می‌شود. <strong>لغزاننده‌ی شدت بیماری را حرکت دهید تا ببینید.</strong></p>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="ماژول‌ها">
+    <button class="tab" role="tab" id="tab-cardio" aria-controls="p-cardio" aria-selected="true">سمع قلب <span class="ch">صوت</span></button>
+    <button class="tab" role="tab" id="tab-neuro" aria-controls="p-neuro" aria-selected="false">نورواوفتالمولوژی <span class="ch">حرکت</span></button>
+    <button class="tab" role="tab" id="tab-moti" aria-controls="p-moti" aria-selected="false">حرکات چشم <span class="ch">عضله</span></button>
+    <button class="tab" role="tab" id="tab-cn7" aria-controls="p-cn7" aria-selected="false">عصب فاسیال <span class="ch">تقارن</span></button>
+    <button class="tab" role="tab" id="tab-abdo" aria-controls="p-abdo" aria-selected="false">معاینه شکم <span class="ch">واکنش</span></button>
+    <button class="tab" role="tab" id="tab-ecg" aria-controls="p-ecg" aria-selected="false">الکتروکاردیوگرام <span class="ch">سیگنال</span></button>
+  </nav>
+
+  <!-- ============ CARDIO ============ -->
+  <section class="panel on" id="p-cardio" role="tabpanel" aria-labelledby="tab-cardio">
+    <div class="grid">
+      <div>
+        <div class="stage">
+          <div class="stage-head">
+            <h2>فونوکاردیوگرام زنده</h2>
+            <span class="meta" id="c-meta">—</span>
+          </div>
+          <div class="stage-body">
+            <canvas id="phono" width="900" height="230"></canvas>
+            <div class="legend">
+              <span><i style="background:var(--ink)"></i> صداهای قلبی</span>
+              <span><i style="background:var(--salmon)"></i> سوفل</span>
+              <span><i style="background:var(--indigo-soft)"></i> صدای اضافه (OS / S3 / S4)</span>
+            </div>
+            <p class="note">نمودار و صدا از یک مجموعه پارامتر واحد ساخته می‌شوند؛ اگر پارامتری تغییر کند هر دو با هم تغییر می‌کنند.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>پل علوم پایه به نشانه</h3>
+          <div class="body"><ol class="bridge" id="c-bridge"></ol></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <h3>پرونده بیمار</h3>
+          <div class="body"><div class="cases" id="c-cases"></div></div>
+        </div>
+        <div class="card">
+          <h3>گوشی روی کدام کانون؟</h3>
+          <div class="body">
+            <div class="sites" id="c-sites"></div>
+            <p class="note">شدت هر جزء با محل گذاشتن گوشی تغییر می‌کند؛ همان چیزی که در بالین به آن «انتشار» می‌گوییم.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>پارامترها</h3>
+          <div class="body">
+            <div class="knob">
+              <label>ضربان قلب <span class="val" id="c-hr-v">۷۲</span></label>
+              <input type="range" id="c-hr" min="40" max="150" value="72">
+            </div>
+            <div class="knob">
+              <label>شدت بیماری <span class="val" id="c-sev-v">۰٫۶</span></label>
+              <input type="range" id="c-sev" min="0" max="100" value="60">
+            </div>
+            <div class="btnrow">
+              <button class="btn" id="c-play">پخش سمع</button>
+              <button class="btn ghost" id="c-stop">توقف</button>
+            </div>
+            <p class="note">برای شنیدن صدا، مرورگر منتظر یک کلیک از کاربر می‌ماند. هدفون کیفیت فرکانس‌های پایین را بهتر نشان می‌دهد.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ NEURO ============ -->
+  <section class="panel" id="p-neuro" role="tabpanel" aria-labelledby="tab-neuro">
+    <div class="grid">
+      <div>
+        <div class="stage">
+          <div class="stage-head">
+            <h2>رفلکس مردمکی</h2>
+            <span class="meta" id="n-meta">نور خاموش</span>
+          </div>
+          <div class="stage-body">
+            <div id="n-svg"></div>
+            <div class="readout" style="margin-top:14px">
+              <div><span class="k">مردمک راست</span><span class="v" id="n-rd">۴٫۰ mm</span></div>
+              <div><span class="k">مردمک چپ</span><span class="v" id="n-ld">۴٫۰ mm</span></div>
+              <div><span class="k">آنیزوکوری</span><span class="v" id="n-aniso">۰٫۰ mm</span></div>
+              <div><span class="k">نور روی</span><span class="v" id="n-side">—</span></div>
+            </div>
+            <p class="note">اندازه مردمک هر چشم = درایو مرکزی مشترک (وابسته به چشم روشن‌شده) × سلامت مسیر وابران همان چشم. انقباض سریع‌تر از اتساع است، مثل واقعیت.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>پل علوم پایه به نشانه</h3>
+          <div class="body"><ol class="bridge" id="n-bridge"></ol></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h3>پرونده بیمار</h3>
+          <div class="body"><div class="cases" id="n-cases"></div></div>
+        </div>
+        <div class="card">
+          <h3>معاینه</h3>
+          <div class="body">
+            <div class="btnrow">
+              <button class="btn ghost" id="n-torch-r">نور روی چشم راست</button>
+              <button class="btn ghost" id="n-torch-l">نور روی چشم چپ</button>
+              <button class="btn ghost" id="n-torch-off">خاموش</button>
+            </div>
+            <div class="btnrow" style="margin-top:9px">
+              <button class="btn live" id="n-swing">تست چراغ نوسانی</button>
+            </div>
+            <p class="note">تست چراغ نوسانی هر ۲٫۵ ثانیه نور را بین دو چشم جابه‌جا می‌کند؛ نشانه‌ی RAPD اتساع متناقض هر دو مردمک هنگام رسیدن نور به چشم مبتلاست.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>پارامترها</h3>
+          <div class="body">
+            <div class="knob">
+              <label>نقص وابران نسبی (چشم چپ) <span class="val" id="n-rapd-v">۰٪</span></label>
+              <input type="range" id="n-rapd" min="0" max="100" value="0">
+            </div>
+            <div class="knob">
+              <label>روشنایی محیط <span class="val" id="n-amb-v">۵۰٪</span></label>
+              <input type="range" id="n-amb" min="0" max="100" value="50">
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+
+  <!-- ============ OCULAR MOTILITY ============ -->
+  <section class="panel" id="p-moti" role="tabpanel" aria-labelledby="tab-moti">
+    <div class="grid">
+      <div>
+        <div class="stage">
+          <div class="stage-head">
+            <h2>حرکات چشمی و تست پوشش</h2>
+            <span class="meta" id="m-meta">—</span>
+          </div>
+          <div class="stage-body">
+            <div id="m-svg"></div>
+            <div class="readout" style="margin-top:14px">
+              <div><span class="k">انحراف افقی</span><span class="v" id="m-dh">۰</span></div>
+              <div><span class="k">انحراف عمودی</span><span class="v" id="m-dv">۰</span></div>
+              <div><span class="k">دوبینی</span><span class="v" id="m-dip">ندارد</span></div>
+              <div><span class="k">چشم فیکس‌کننده</span><span class="v" id="m-fix">راست</span></div>
+            </div>
+            <p class="note">هر چشم شش عضله دارد و هر عضله یک عدد قدرت. وضعیت چشم، تعادل نیروی این شش عضله به‌علاوه کشسانی بافت حدقه است؛ هیچ حالت آماده‌ای برای هیچ فلجی ذخیره نشده.</p>
+          </div>
+        </div>
+        <div class="stage" style="margin-top:16px">
+          <div class="stage-head">
+            <h2>نه جهت تشخیصی نگاه</h2>
+            <span class="meta">انحراف بر حسب دیوپتر منشوری</span>
+          </div>
+          <div class="stage-body"><div id="m-grid"></div></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>پل علوم پایه به نشانه</h3>
+          <div class="body"><ol class="bridge" id="m-bridge"></ol></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h3>پرونده بیمار</h3>
+          <div class="body"><div class="cases" id="m-cases"></div></div>
+        </div>
+        <div class="card">
+          <h3>جهت نگاه</h3>
+          <div class="body"><div class="sites" id="m-pos"></div></div>
+        </div>
+        <div class="card">
+          <h3>تست پوشش</h3>
+          <div class="body">
+            <div class="btnrow" id="m-cover"></div>
+            <p class="note">چشمی که پوشیده می‌شود دیگر تثبیت نمی‌کند. اگر چشم فلج مجبور به تثبیت شود، عصب‌دهی بیشتری لازم دارد و طبق قانون هرینگ همان مقدار به چشم سالم هم می‌رسد؛ برای همین انحراف ثانویه از انحراف اولیه بزرگ‌تر در می‌آید.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>قدرت عضلات</h3>
+          <div class="body" id="m-muscles"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ FACIAL NERVE ============ -->
+  <section class="panel" id="p-cn7" role="tabpanel" aria-labelledby="tab-cn7">
+    <div class="grid">
+      <div>
+        <div class="stage">
+          <div class="stage-head">
+            <h2>عصب هفتم — تقارن حرکات صورت</h2>
+            <span class="meta" id="c7-meta">—</span>
+          </div>
+          <div class="stage-body">
+            <div style="max-width:520px;margin:0 auto"><div id="c7-svg"></div></div>
+            <div class="say" id="c7-verdict" style="margin-top:12px"></div>
+            <div class="readout" style="margin-top:12px">
+              <div><span class="k">چین پیشانی</span><span class="v" id="c7-forehead">—</span></div>
+              <div><span class="k">بستن چشم</span><span class="v" id="c7-eye">—</span></div>
+              <div><span class="k">گوشه دهان</span><span class="v" id="c7-mouth">—</span></div>
+            </div>
+            <p class="note">حالت صورت از واحدهای حرکتی ساخته می‌شود، نه از تصویرهای ذخیره‌شده. ضعف بالای صورت و پایین صورت دو عدد جداگانه‌اند، و همین است که فلج مرکزی را از محیطی جدا می‌کند.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>پل علوم پایه به نشانه</h3>
+          <div class="body"><ol class="bridge" id="c7-bridge"></ol></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h3>پرونده بیمار</h3>
+          <div class="body"><div class="cases" id="c7-cases"></div></div>
+        </div>
+        <div class="card">
+          <h3>از بیمار بخواهید</h3>
+          <div class="body">
+            <div class="sites" id="c7-tasks"></div>
+            <p class="note">تنها یکی از این پنج کار، مرکزی را از محیطی جدا می‌کند.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>پارامترها</h3>
+          <div class="body">
+            <div class="knob">
+              <label>شدت ضعف <span class="val" id="c7-sev-v">۹۲٪</span></label>
+              <input type="range" id="c7-sev" min="0" max="100" value="92">
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ ABDOMEN ============ -->
+  <section class="panel" id="p-abdo" role="tabpanel" aria-labelledby="tab-abdo">
+    <div class="grid">
+      <div>
+        <div class="stage">
+          <div class="stage-head">
+            <h2>لمس شکم و پاسخ بیمار</h2>
+            <span class="meta" id="a-meta">ناحیه‌ای لمس نشده</span>
+          </div>
+          <div class="stage-body">
+            <div style="max-width:560px;margin:0 auto"><div id="a-svg"></div></div>
+            <div class="say quiet" id="a-say" style="margin-top:12px">برای لمس، روی یکی از نه ناحیه شکم کلیک کنید.</div>
+            <div class="readout" style="margin-top:12px">
+              <div><span class="k">شدت درد گزارش‌شده</span><span class="v" id="a-pain">۰ / ۱۰</span></div>
+              <div><span class="k">دفاع عضلانی</span><span class="v" id="a-guard">ندارد</span></div>
+              <div><span class="k">ناحیه</span><span class="v" id="a-region">—</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>پل علوم پایه به نشانه</h3>
+          <div class="body"><ol class="bridge" id="a-bridge"></ol></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h3>پرونده بیمار</h3>
+          <div class="body"><div class="cases" id="a-cases"></div></div>
+        </div>
+        <div class="card">
+          <h3>مانورهای اختصاصی</h3>
+          <div class="body">
+            <div class="btnrow">
+              <button class="btn ghost" data-man="rebound">تندرنس ریباند</button>
+              <button class="btn ghost" data-man="murphy">علامت مورفی</button>
+              <button class="btn ghost" data-man="rovsing">علامت روزینگ</button>
+              <button class="btn ghost" data-man="psoas">تست پسواس</button>
+            </div>
+            <p class="note">پاسخ هر مانور از همان نقشه‌ی حساسیت و درجه‌ی تحریک صفاق محاسبه می‌شود، نه از متن از پیش نوشته برای هر بیماری.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>پارامترها</h3>
+          <div class="body">
+            <div class="knob">
+              <label>عمق فشار <span class="val" id="a-depth-v">سطحی</span></label>
+              <input type="range" id="a-depth" min="0" max="100" value="30">
+            </div>
+            <div class="knob">
+              <label>ساعت از شروع علائم <span class="val" id="a-hours-v">۱۲ ساعت</span></label>
+              <input type="range" id="a-hours" min="1" max="48" value="12">
+            </div>
+            <p class="note">با گذشت زمان، درد آپاندیسیت از ناحیه اطراف ناف به ربع تحتانی راست جابه‌جا می‌شود و تحریک صفاق بیشتر می‌شود.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ ECG ============ -->
+  <section class="panel" id="p-ecg" role="tabpanel" aria-labelledby="tab-ecg">
+    <div class="grid">
+      <div>
+        <div class="stage">
+          <div class="stage-head">
+            <h2>الکتروکاردیوگرام ۱۲ اشتقاقی</h2>
+            <span class="meta">۲۵ mm/s · ۱۰ mm/mV</span>
+          </div>
+          <div class="stage-body">
+            <canvas id="ecg" width="960" height="620"></canvas>
+            <p class="note">مدل: یک دوقطبی قلبی که بردار لحظه‌ای‌اش روی محور هر اشتقاق تصویر می‌شود. به همین دلیل تغییرات معکوس (reciprocal) خودبه‌خود ظاهر می‌شوند و دستی اضافه نشده‌اند.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>پل علوم پایه به نشانه</h3>
+          <div class="body"><ol class="bridge" id="e-bridge"></ol></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h3>پرونده بیمار</h3>
+          <div class="body"><div class="cases" id="e-cases"></div></div>
+        </div>
+        <div class="card">
+          <h3>پارامترها</h3>
+          <div class="body">
+            <div class="knob">
+              <label>ضربان بطنی <span class="val" id="e-hr-v">۷۵</span></label>
+              <input type="range" id="e-hr" min="30" max="180" value="75">
+            </div>
+            <div class="knob">
+              <label>محور QRS <span class="val" id="e-axis-v">۶۰°</span></label>
+              <input type="range" id="e-axis" min="-90" max="150" value="60">
+            </div>
+            <div class="knob">
+              <label>بزرگی بردار آسیب (ST) <span class="val" id="e-st-v">۰٫۰۰ mV</span></label>
+              <input type="range" id="e-st" min="0" max="60" value="0">
+            </div>
+            <div class="knob">
+              <label>جهت بردار آسیب <span class="val" id="e-inj-v">۹۰°</span></label>
+              <input type="range" id="e-inj" min="-180" max="180" value="90">
+            </div>
+            <p class="note">جهت بردار آسیب را بچرخانید: الگوی صعود و نزول قطعه ST بین اشتقاق‌ها به‌طور خودکار جابه‌جا می‌شود.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="honest">
+    <h3>مرز صداقت این نمونه — چه چیزی مدل شده، چه چیزی تقریب است، چه چیزی شبیه‌سازی نمی‌شود</h3>
+    <div class="cols">
+      <div class="col ok">
+        <h4>مدل‌شده و قابل دفاع</h4>
+        <ul>
+          <li>زمان‌بندی سیکل قلبی، جایگاه و طول سوفل‌ها، فاصله A2 تا OS</li>
+          <li>وابسته و وابران بودن رفلکس مردمکی و پاسخ همسو</li>
+          <li>تصویر بردار قلبی روی محور اشتقاق‌ها و تغییرات معکوس</li>
+          <li>نقشه حساسیت شکم و تفاوت پاسخ فشار و رهاسازی</li>
+          <li>وضعیت چشم از تعادل نیروی شش عضله، با قانون هرینگ برای انحراف ثانویه</li>
+          <li>جدایی ضعف بالا و پایین صورت، که مبنای تفکیک فلج مرکزی از محیطی است</li>
+        </ul>
+      </div>
+      <div class="col approx">
+        <h4>تقریب آگاهانه</h4>
+        <ul>
+          <li>بافت طیفی سوفل با نویز فیلترشده ساخته می‌شود؛ امضای طیفی هر دریچه واقعی بازسازی نشده</li>
+          <li>اشتقاق‌های پیش‌کوردیال با یک صفحه افقی ساده‌شده تخمین زده می‌شوند</li>
+          <li>چهره بیمار شماتیک است و بیانگر شدت است، نه یک چهره واقعی</li>
+          <li>دامنه پاسخ مردمکی عمداً بزرگ‌نمایی شده تا روی نمایشگر دیده شود؛ RAPD واقعی بسیار ظریف‌تر است</li>
+          <li>چهار ثابت مدل حرکات چشمی با جست‌وجوی شبکه‌ای روی دامنه‌های بالینی منتشرشده برازش شده‌اند، نه از فیزیک استخراج</li>
+          <li>پتوز فلج عصب سوم کمی کمتر از واقعیت کشیده شده تا وضعیت چشم زیر پلک قابل دیدن بماند</li>
+          <li>بیمار مجازی یک تصویرسازی برداری بالینی است، نه رندر سه‌بعدی؛ چهره، صورت یک آدم واقعی نیست</li>
+        </ul>
+      </div>
+      <div class="col no">
+        <h4>شبیه‌سازی نمی‌شود</h4>
+        <ul>
+          <li>حس لمس؛ فقط واکنش دیداری و کلامی بیمار به لمس شبیه‌سازی می‌شود</li>
+          <li>دق و ارزیابی حرکت قفسه سینه</li>
+          <li>تورشن چشم و تست خم کردن سر؛ مدل فقط دو محور افقی و عمودی دارد</li>
+          <li>چشایی دو سوم قدامی زبان، هایپراکوزی و اشک‌ریزش در فلج عصب هفتم</li>
+          <li>هیچ داده اعتبارسنجی بالینی هنوز جمع‌آوری نشده؛ این نمونه آزمون میدانی نشده است</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div>
+<script>
+"use strict";
+/* ================================================================
+   بالین (BALIN) — parametric clinical sign-generation engine
+   Prototype 0.4 — four modules, four rendering channels.
+   No pre-recorded media. Every sign is computed from parameters.
+   ================================================================ */
+
+/* ---------------- utilities ---------------- */
+const FA = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function fa(x){ return String(x).replace(/[0-9]/g, d => FA[+d]).replace('.', '٫'); }
+function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+function lerp(a, b, t){ return a + (b - a) * t; }
+function deg(d){ return d * Math.PI / 180; }
+function el(id){ return document.getElementById(id); }
+
+// deterministic PRNG so redrawn traces do not shimmer between frames
+function mulberry(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function renderBridge(target, steps){
+  target.innerHTML = steps.map(s => `<li><b>${s[0]}</b> — ${s[1]}</li>`).join('');
+}
+
+function buildCaseButtons(host, cases, current, onPick){
+  host.innerHTML = '';
+  Object.keys(cases).forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'case';
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(k === current));
+    b.innerHTML = `<span>${cases[k].name}</span><span class="tagi">${cases[k].tag}</span>`;
+    b.addEventListener('click', () => {
+      [...host.children].forEach(c => c.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      onPick(k);
+    });
+    host.appendChild(b);
+  });
+}
+
+/* ================================================================
+   MODULE 1 — CARDIAC AUSCULTATION  (channel: synthesised audio)
+   ================================================================ */
+const Cardio = (function(){
+
+  const cases = {
+    normal: {
+      name: 'قلب طبیعی', tag: 'شاهد',
+      bridge: [
+        ['بسته شدن دریچه‌های دهلیزی-بطنی', 'میترال و تریکوسپید در آغاز انقباض بسته می‌شوند و S1 را می‌سازند'],
+        ['بسته شدن دریچه‌های سمی‌لونار', 'آئورت و پولمونر در پایان سیستول بسته می‌شوند و S2 را می‌سازند'],
+        ['جریان بدون اغتشاش', 'عدد رینولدز پایین می‌ماند، پس صدای اضافه‌ای تولید نمی‌شود'],
+        ['یافته بالینی', 'دو صدای کوتاه، بدون سوفل؛ شکاف فیزیولوژیک S2 در دم']
+      ]
+    },
+    ms: {
+      name: 'تنگی میترال', tag: 'دیاستولیک',
+      bridge: [
+        ['برگچه میترال', 'التهاب روماتیسمی باعث چسبندگی کمیسورها و ضخیم‌شدن برگچه‌ها می‌شود'],
+        ['هندسه دریچه', 'سطح مقطع مؤثر کاهش می‌یابد و دریچه گنبدی‌شکل باز می‌شود'],
+        ['گرادیان فشار', 'اختلاف فشار دهلیز چپ و بطن چپ در سراسر دیاستول باقی می‌ماند'],
+        ['نشانه شنیدنی', 'S1 بلند، صدای باز شدن، رامبل دیاستولیک با فرکانس پایین در نوک قلب']
+      ]
+    },
+    mr: {
+      name: 'نارسایی میترال', tag: 'سیستولیک',
+      bridge: [
+        ['دستگاه میترال', 'اتساع حلقه یا آسیب طناب‌های وتری، تقارب برگچه‌ها را از بین می‌برد'],
+        ['جریان برگشتی', 'خون در تمام سیستول از بطن چپ به دهلیز چپ می‌ریزد'],
+        ['گرادیان ثابت', 'اختلاف فشار بطن و دهلیز در کل سیستول بالاست، پس شدت سوفل ثابت می‌ماند'],
+        ['نشانه شنیدنی', 'سوفل هولوسیستولیک دمنده در نوک با انتشار به زیر بغل، S1 ضعیف']
+      ]
+    },
+    as: {
+      name: 'تنگی آئورت', tag: 'سیستولیک',
+      bridge: [
+        ['برگچه آئورت', 'کلسیفیکاسیون و فیبروز باز شدن کامل برگچه‌ها را محدود می‌کند'],
+        ['شتاب جریان', 'برای حفظ برون‌ده، سرعت جریان از سوراخ تنگ‌شده بالا می‌رود'],
+        ['اغتشاش جریان', 'جت پرسرعت در آئورت صعودی گردابه می‌سازد؛ اوج آن با شدت تنگی دیرتر می‌شود'],
+        ['نشانه شنیدنی', 'سوفل کرشندو-دکرشندو در کانون آئورت، A2 ضعیف، S4 در تنگی شدید']
+      ]
+    },
+    ar: {
+      name: 'نارسایی آئورت', tag: 'دیاستولیک',
+      bridge: [
+        ['ریشه آئورت', 'اتساع ریشه یا آسیب برگچه‌ها مانع بسته شدن کامل دریچه می‌شود'],
+        ['بازگشت دیاستولیک', 'خون از آئورت به بطن چپ برمی‌گردد؛ فشار آئورت به‌سرعت افت می‌کند'],
+        ['گرادیان نزولی', 'با پر شدن بطن، اختلاف فشار کم می‌شود و شدت سوفل کاهش می‌یابد'],
+        ['نشانه شنیدنی', 'سوفل دکرشندو با فرکانس بالا بلافاصله بعد از S2، بهترین محل نقطه ارب']
+      ]
+    }
+  };
+
+  const siteNames = { ao: 'آئورت (بین‌دنده‌ای ۲ راست)', pul: 'پولمونر (بین‌دنده‌ای ۲ چپ)', erb: 'ارب / لبه پایینی جناغ', ap: 'نوک قلب' };
+
+  // how loudly each component reaches each auscultation site
+  const gainMap = {
+    murmur: {
+      normal: { ao: 0, pul: 0, erb: 0, ap: 0 },
+      ms:     { ao: .12, pul: .15, erb: .35, ap: 1 },
+      mr:     { ao: .28, pul: .30, erb: .50, ap: 1 },
+      as:     { ao: 1, pul: .65, erb: .45, ap: .55 },
+      ar:     { ao: .70, pul: .80, erb: 1, ap: .40 }
+    },
+    s1: { ao: .50, pul: .55, erb: .90, ap: 1 },
+    s2: { ao: 1, pul: 1, erb: .70, ap: .50 },
+    low: { ao: .30, pul: .35, erb: .70, ap: 1 },   // S3 / S4 / opening snap
+  };
+
+  let key = 'normal', hr = 72, sev = 0.6, site = 'ap';
+
+  /* ---- the engine: parameters -> a complete beat plan ---- */
+  function plan(){
+    const cycle = 60 / hr;
+    const sys = clamp(0.30 * Math.pow(cycle, 0.4), 0.16, 0.38);
+    const dia = cycle - sys;
+    const p = { key, hr, sev, cycle, sys, dia, sounds: [], murmurs: [], notes: [] };
+    const g = c => gainMap[c][site];
+    const gm = gainMap.murmur[key][site];
+
+    let s1g = 1, s2ag = 0.85, split = 0.032, a2t = sys, p2t = sys + 0.032;
+
+    if (key === 'ms') {
+      s1g = 1 + 0.55 * sev;
+      const osInt = 0.125 - 0.062 * sev;                 // A2–OS shortens as stenosis worsens
+      const osT = sys + osInt;
+      p.sounds.push({ t: osT, f: 115, q: 6, dur: 0.028, g: (0.45 + 0.35 * sev) * g('low'), kind: 'extra', label: 'OS' });
+      const room = dia - osInt - 0.05;                    // space left before the next S1
+      const rumbleLen = Math.max(0, Math.min(room, Math.max(0.055, (dia - osInt - 0.10) * (0.35 + 0.6 * sev))));
+      if (rumbleLen > 0.03) p.murmurs.push({ t0: osT + 0.02, t1: osT + 0.02 + rumbleLen, shape: 'rumble', f: 72, q: 1.4, g: (0.30 + 0.5 * sev) * gm, label: 'رامبل دیاستولیک' });
+      if (hr < 100 && sev > 0.2) {
+        p.murmurs.push({ t0: cycle - 0.11, t1: cycle - 0.012, shape: 'cresc', f: 78, q: 1.4, g: (0.22 + 0.4 * sev) * gm, label: 'تشدید پیش‌سیستولی' });
+      }
+      p.notes.push('A2 تا OS: ' + fa(Math.round(osInt * 1000)) + ' میلی‌ثانیه');
+    }
+
+    if (key === 'mr') {
+      s1g = 1 - 0.45 * sev;
+      split = 0.032 + 0.030 * clamp((sev - 0.4) / 0.6, 0, 1);
+      p2t = sys + split;
+      p.murmurs.push({ t0: 0.018, t1: sys + 0.012, shape: 'plateau', f: 285, q: 0.8, g: (0.28 + 0.55 * sev) * gm, label: 'هولوسیستولیک' });
+      if (sev > 0.55 && sys + 0.145 < cycle - 0.03) p.sounds.push({ t: sys + 0.145, f: 36, q: 2.5, dur: 0.075, g: (0.25 + 0.45 * (sev - 0.55) / 0.45) * g('low'), kind: 'extra', label: 'S3' });
+    }
+
+    if (key === 'as') {
+      const peak = 0.34 + 0.34 * sev;                     // late-peaking = more severe
+      s2ag = 0.85 * (1 - 0.72 * sev);
+      p.murmurs.push({ t0: 0.035, t1: sys - 0.018, shape: 'diamond', peak: peak, f: 205, q: 0.7, g: (0.32 + 0.5 * sev) * gm, label: 'کرشندو-دکرشندو' });
+      if (sev > 0.5 && cycle - 0.058 > sys + 0.04) p.sounds.push({ t: cycle - 0.058, f: 36, q: 2.5, dur: 0.065, g: (0.22 + 0.3 * (sev - 0.5) / 0.5) * g('low'), kind: 'extra', label: 'S4' });
+      if (sev > 0.7) { a2t = sys + 0.035; p2t = sys; p.notes.push('شکاف متناقض S2'); }
+      p.notes.push('اوج سوفل در ' + fa(Math.round(peak * 100)) + '٪ سیستول');
+    }
+
+    if (key === 'ar') {
+      const len = clamp(dia * (0.35 + 0.6 * sev), 0.08, dia - 0.03);
+      p.murmurs.push({ t0: sys + 0.025, t1: sys + 0.025 + len, shape: 'decresc', f: 345, q: 0.6, g: (0.24 + 0.5 * sev) * gm, label: 'دکرشندو دیاستولیک' });
+      if (sev > 0.7 && cycle - 0.16 > sys + len + 0.02) p.murmurs.push({ t0: cycle - 0.16, t1: cycle - 0.02, shape: 'rumble', f: 80, q: 1.5, g: 0.18 * gainMap.murmur.ms[site], label: 'آستین-فلینت' });
+      if (sev > 0.75 && sys + 0.145 < cycle - 0.03) p.sounds.push({ t: sys + 0.145, f: 36, q: 2.5, dur: 0.07, g: 0.28 * g('low'), kind: 'extra', label: 'S3' });
+    }
+
+    p.sounds.push({ t: 0, f: 46, q: 3, dur: 0.062, g: s1g * g('s1'), kind: 's', label: 'S1' });
+    p.sounds.push({ t: a2t, f: 66, q: 3.5, dur: 0.048, g: s2ag * g('s2'), kind: 's', label: 'A2' });
+    p.sounds.push({ t: p2t, f: 74, q: 3.5, dur: 0.042, g: 0.36 * g('s2'), kind: 's', label: 'P2' });
+    p.sounds.sort((a, b) => a.t - b.t);
+    return p;
+  }
+
+  /* ---- audio rendering ---- */
+  const A = { ctx: null, master: null, noise: null, next: 0, timer: null, on: false, t0: 0 };
+
+  function ensure(){
+    if (A.ctx) return;
+    const C = window.AudioContext || window.webkitAudioContext;
+    A.ctx = new C();
+    A.master = A.ctx.createGain();
+    A.master.gain.value = 0.85;
+    const lp = A.ctx.createBiquadFilter();       // chest wall acts as a low-pass filter
+    lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.7;
+    A.master.connect(lp).connect(A.ctx.destination);
+    const n = A.ctx.sampleRate * 2;
+    A.noise = A.ctx.createBuffer(1, n, A.ctx.sampleRate);
+    const d = A.noise.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  }
+
+  function burst(t, s){
+    const ctx = A.ctx;
+    const src = ctx.createBufferSource(); src.buffer = A.noise; src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = s.f; bp.Q.value = s.q;
+    const g = ctx.createGain();
+    const peak = Math.max(0.0015, s.g * 0.9);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + s.dur);
+    src.connect(bp).connect(g).connect(A.master);
+    src.start(t); src.stop(t + s.dur + 0.03);
+
+    const osc = ctx.createOscillator(); osc.type = 'sine';
+    osc.frequency.setValueAtTime(s.f * 1.25, t);
+    osc.frequency.exponentialRampToValueAtTime(s.f * 0.72, t + s.dur);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, t);
+    og.gain.linearRampToValueAtTime(Math.max(0.0015, s.g * 0.55), t + 0.006);
+    og.gain.exponentialRampToValueAtTime(0.0006, t + s.dur);
+    osc.connect(og).connect(A.master);
+    osc.start(t); osc.stop(t + s.dur + 0.03);
+  }
+
+  function envelope(m, n){
+    const e = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = i / (n - 1);
+      let v;
+      if (m.shape === 'plateau')      v = 1 - 0.15 * Math.abs(x - 0.5) * 2;
+      else if (m.shape === 'diamond') { const p = m.peak || 0.5; v = Math.exp(-Math.pow((x - p) / 0.26, 2)); }
+      else if (m.shape === 'decresc') v = Math.pow(1 - x, 1.35);
+      else if (m.shape === 'cresc')   v = Math.pow(x, 1.4);
+      else                            v = 0.55 + 0.45 * Math.pow(x, 1.8);   // rumble
+      const edge = Math.min(1, x / 0.05) * Math.min(1, (1 - x) / 0.05);
+      e[i] = Math.max(0.0001, v * edge * m.g);
+    }
+    return e;
+  }
+
+  function noiseBand(t0, t1, m){
+    if (t1 - t0 < 0.02 || m.g <= 0.001) return;
+    const ctx = A.ctx;
+    const src = ctx.createBufferSource(); src.buffer = A.noise; src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = m.f; bp.Q.value = m.q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.setValueCurveAtTime(envelope(m, 64), t0, t1 - t0);
+    src.connect(bp).connect(g).connect(A.master);
+    src.start(t0); src.stop(t1 + 0.02);
+  }
+
+  function scheduleBeat(t, p){
+    p.sounds.forEach(s => burst(t + s.t, s));
+    p.murmurs.forEach(m => noiseBand(t + m.t0, t + m.t1, m));
+  }
+
+  function tick(){
+    if (!A.on) return;
+    while (A.next < A.ctx.currentTime + 0.35) {
+      const p = plan();                     // rebuilt every beat, so slider moves are audible at once
+      scheduleBeat(A.next, p);
+      A.next += p.cycle;
+    }
+  }
+
+  function start(){
+    ensure();
+    if (A.ctx.state === 'suspended') A.ctx.resume();
+    if (A.on) return;
+    A.on = true;
+    A.next = A.ctx.currentTime + 0.12;
+    A.t0 = A.next;
+    tick();
+    A.timer = setInterval(tick, 45);
+    el('c-play').textContent = 'در حال سمع';
+    el('c-play').classList.add('live');
+    loop();
+  }
+
+  function stop(){
+    if (!A.on) return;
+    A.on = false;
+    clearInterval(A.timer);
+    if (A.ctx) {
+      const now = A.ctx.currentTime;
+      A.master.gain.cancelScheduledValues(now);
+      A.master.gain.setValueAtTime(A.master.gain.value, now);
+      A.master.gain.linearRampToValueAtTime(0.0001, now + 0.06);
+      setTimeout(() => {
+        if (!A.ctx || A.on) return;
+        const t = A.ctx.currentTime;
+        A.master.gain.cancelScheduledValues(t);
+        A.master.gain.setValueAtTime(0.85, t);
+      }, 260);
+    }
+    el('c-play').textContent = 'پخش سمع';
+    el('c-play').classList.remove('live');
+    draw();
+  }
+
+  /* ---- phonocardiogram: same plan, drawn instead of played ---- */
+  const cv = () => el('phono');
+  let cache = null;
+
+  function trace(p){
+    const c = cv(), g = c.getContext('2d');
+    const W = c.width, H = c.height, mid = H / 2;
+    const cycles = 2, total = p.cycle * cycles, ppx = W / total;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = '#F3F0EA'; g.fillRect(0, 0, W, H);
+
+    // cycle boundaries and systole shading
+    for (let k = 0; k < cycles; k++) {
+      const x0 = k * p.cycle * ppx;
+      g.fillStyle = 'rgba(39,71,107,.055)';
+      g.fillRect(x0, 12, p.sys * ppx, H - 24);
+      g.strokeStyle = '#C9C2B5'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x0 + .5, 8); g.lineTo(x0 + .5, H - 8); g.stroke();
+      g.fillStyle = '#7A8792'; g.font = '12px system-ui, sans-serif';
+      g.fillText('systole', x0 + 6, 22);
+      g.fillText('diastole', x0 + p.sys * ppx + 6, 22);
+    }
+    g.strokeStyle = '#C9C2B5';
+    g.beginPath(); g.moveTo(0, mid + .5); g.lineTo(W, mid + .5); g.stroke();
+
+    const rnd = mulberry(1337);
+    const N = 3200, amp = H * 0.34;
+
+    function band(list, color, isMurmur){
+      g.fillStyle = color;
+      const up = [];
+      for (let i = 0; i < N; i++) {
+        const t = (i / N) * total;
+        const tc = t % p.cycle;
+        let v = 0;
+        list.forEach(s => {
+          if (isMurmur) {
+            if (tc >= s.t0 && tc <= s.t1) {
+              const x = (tc - s.t0) / (s.t1 - s.t0);
+              let e;
+              if (s.shape === 'plateau') e = 1;
+              else if (s.shape === 'diamond') e = Math.exp(-Math.pow((x - (s.peak || .5)) / 0.26, 2));
+              else if (s.shape === 'decresc') e = Math.pow(1 - x, 1.35);
+              else if (s.shape === 'cresc') e = Math.pow(x, 1.4);
+              else e = 0.55 + 0.45 * Math.pow(x, 1.8);
+              v += e * s.g * (rnd() * 2 - 1) * 1.5;
+            }
+          } else {
+            const dt = tc - s.t;
+            if (dt >= 0 && dt < s.dur * 1.6) {
+              v += s.g * Math.exp(-dt / (s.dur * 0.42)) * Math.sin(2 * Math.PI * s.f * dt * 3.2);
+            }
+          }
+        });
+        up.push(mid - v * amp);
+      }
+      g.beginPath();
+      g.moveTo(0, mid);
+      for (let i = 0; i < N; i++) g.lineTo((i / N) * W, up[i]);
+      g.lineTo(W, mid);
+      g.closePath();
+      g.fill();
+    }
+
+    band(p.murmurs, 'rgba(192,80,74,.85)', true);
+    band(p.sounds.filter(s => s.kind === 'extra'), 'rgba(92,126,166,.95)', false);
+    band(p.sounds.filter(s => s.kind === 's'), 'rgba(22,33,42,.92)', false);
+
+    // labels
+    g.font = '600 12px system-ui, sans-serif';
+    for (let k = 0; k < cycles; k++) {
+      p.sounds.forEach(s => {
+        const x = (k * p.cycle + s.t) * ppx;
+        g.fillStyle = s.kind === 'extra' ? '#27476B' : '#16212A';
+        g.fillText(s.label, x + 3, H - 12);
+      });
+    }
+    return c;
+  }
+
+  function draw(){
+    const p = plan();
+    trace(p);
+    el('c-meta').textContent =
+      `${cases[key].name} · ${siteNames[site]} · دوره ${fa(Math.round(p.cycle * 1000))} ms` +
+      (p.notes.length ? ' · ' + p.notes.join(' · ') : '');
+    renderBridge(el('c-bridge'), cases[key].bridge);
+  }
+
+  function loop(){
+    if (!A.on) return;
+    const p = plan();
+    trace(p);
+    const c = cv(), g = c.getContext('2d');
+    const total = p.cycle * 2;
+    const ph = ((A.ctx.currentTime - A.t0) % total) / total;
+    g.strokeStyle = '#A8762A'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(ph * c.width, 6); g.lineTo(ph * c.width, c.height - 6); g.stroke();
+    requestAnimationFrame(loop);
+  }
+
+  function init(){
+    buildCaseButtons(el('c-cases'), cases, key, k => { key = k; draw(); });
+    const sh = el('c-sites');
+    Object.keys(siteNames).forEach(s => {
+      const b = document.createElement('button');
+      b.className = 'site'; b.type = 'button';
+      b.setAttribute('aria-pressed', String(s === site));
+      b.textContent = siteNames[s];
+      b.addEventListener('click', () => {
+        [...sh.children].forEach(c => c.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', 'true');
+        site = s; draw();
+      });
+      sh.appendChild(b);
+    });
+    el('c-hr').addEventListener('input', e => { hr = +e.target.value; el('c-hr-v').textContent = fa(hr); draw(); });
+    el('c-sev').addEventListener('input', e => {
+      sev = +e.target.value / 100;
+      el('c-sev-v').textContent = fa(sev.toFixed(2));
+      draw();
+    });
+    el('c-play').addEventListener('click', start);
+    el('c-stop').addEventListener('click', stop);
+    el('c-sev-v').textContent = fa(sev.toFixed(2));
+    draw();
+  }
+
+  return { init, stop, draw };
+})();
+
+/* ================================================================
+   MODULE 2 — PUPILLARY / NEURO-OPHTHALMOLOGY  (channel: animation)
+   ================================================================ */
+const Neuro = (function(){
+
+  const cases = {
+    normal: {
+      name: 'مسیر مردمکی سالم', tag: 'شاهد',
+      p: { affR: 0, affL: 0, effR: 0, effL: 0, maxR: 8, maxL: 8, ptR: 0, ptL: 0, gazeR: 0, gazeL: 0, dilTauR: .55, dilTauL: .55 },
+      bridge: [
+        ['شبکیه و عصب بینایی', 'نور به سلول‌های گانگلیونی ذاتاً حساس به نور می‌رسد و پیام وابران می‌سازد'],
+        ['هسته پره‌تکتال', 'پیام به هر دو هسته ادینگر-وستفال دو طرف می‌رود'],
+        ['عصب سوم و گانگلیون مژگانی', 'الیاف پاراسمپاتیک عضله اسفنکتر مردمک را منقبض می‌کنند'],
+        ['یافته بالینی', 'انقباض مستقیم و همسو، قرینه در هر دو چشم']
+      ]
+    },
+    rapd: {
+      name: 'نقص وابران نسبی چشم چپ', tag: 'RAPD',
+      p: { affR: 0, affL: .65, effR: 0, effL: 0, maxR: 8, maxL: 8, ptR: 0, ptL: 0, gazeR: 0, gazeL: 0, dilTauR: .55, dilTauL: .55 },
+      bridge: [
+        ['آسیب عصب بینایی چپ', 'مثلاً نوریت اپتیک: هدایت الیاف وابران کاهش می‌یابد'],
+        ['کاهش ورودی مرکزی', 'وقتی نور روی چشم چپ است، پیام کمتری به هسته پره‌تکتال می‌رسد'],
+        ['خروجی وابران سالم', 'مسیر حرکتی هر دو چشم سالم است، پس پاسخ همچنان قرینه می‌ماند'],
+        ['یافته بالینی', 'در تست چراغ نوسانی، با رسیدن نور به چشم چپ هر دو مردمک گشاد می‌شوند']
+      ]
+    },
+    cn3: {
+      name: 'فلج عصب سوم راست', tag: 'وابران',
+      p: { affR: 0, affL: 0, effR: .95, effL: 0, maxR: 8, maxL: 8, ptR: .8, ptL: 0, gazeR: 1, gazeL: 0, dilTauR: .55, dilTauL: .55 },
+      bridge: [
+        ['آناتومی عصب سوم', 'الیاف پاراسمپاتیک در سطح خارجی عصب قرار دارند و به فشار حساس‌ترند'],
+        ['فشار خارجی', 'آنوریسم شریان ارتباطی خلفی ابتدا همین الیاف سطحی را درگیر می‌کند'],
+        ['از دست رفتن وابران', 'اسفنکتر مردمک و بالابرنده پلک و چهار عضله خارج‌چشمی فلج می‌شوند'],
+        ['یافته بالینی', 'مردمک گشاد و بی‌پاسخ، پتوز، و چشم به سمت پایین و خارج']
+      ]
+    },
+    horner: {
+      name: 'سندرم هورنر چپ', tag: 'سمپاتیک',
+      p: { affR: 0, affL: 0, effR: 0, effL: 0, maxR: 8, maxL: 5.2, ptR: 0, ptL: .3, gazeR: 0, gazeL: 0, dilTauR: .55, dilTauL: 1.6 },
+      bridge: [
+        ['زنجیره سمپاتیک', 'مسیر سه‌نورونی از هیپوتالاموس تا گانگلیون گردنی فوقانی'],
+        ['قطع مسیر', 'ضایعه راه سمپاتیک، تحریک عضله گشادکننده مردمک را قطع می‌کند'],
+        ['غلبه پاراسمپاتیک', 'مردمک در تاریکی نمی‌تواند به‌اندازه طرف سالم گشاد شود'],
+        ['یافته بالینی', 'میوز، پتوز خفیف، و تأخیر اتساع؛ آنیزوکوری در تاریکی بیشتر است']
+      ]
+    }
+  };
+
+  let key = 'normal', torch = null, ambient = .5, rapdSlider = null, swingTimer = null;
+  const st = { dR: 4, dL: 4 };
+  let last = 0, raf = null;
+
+  function params(){
+    const p = Object.assign({}, cases[key].p);
+    if (key === 'rapd' && rapdSlider !== null) p.affL = rapdSlider;
+    return p;
+  }
+
+  function svg(){
+    const eye = (id, cx) => `
+      <g id="eye-${id}">
+        <ellipse cx="${cx}" cy="150" rx="104" ry="62" fill="#F7F4EE" stroke="#16212A" stroke-width="2.5"/>
+        <ellipse cx="${cx}" cy="150" rx="98" ry="56" fill="#FBF9F5"/>
+        <g id="glob-${id}">
+          <circle id="iris-${id}" cx="${cx}" cy="150" r="42" fill="#6B4B2E"/>
+          <circle cx="${cx}" cy="150" r="42" fill="none" stroke="#3A2716" stroke-width="2"/>
+          <circle id="pup-${id}" cx="${cx}" cy="150" r="14" fill="#12100E"/>
+          <circle id="gl-${id}" cx="${cx - 14}" cy="136" r="6" fill="#FFFFFF" opacity="0"/>
+        </g>
+        <path id="lid-${id}" d="M ${cx - 106} 150 Q ${cx} 60 ${cx + 106} 150 L ${cx + 106} 78 L ${cx - 106} 78 Z" fill="#E4DFD5" stroke="#16212A" stroke-width="2.5"/>
+        <ellipse id="beam-${id}" cx="${cx}" cy="150" rx="120" ry="80" fill="#F2D89A" opacity="0"/>
+      </g>`;
+    return `<svg viewBox="0 0 900 300" style="width:100%;height:auto" role="img" aria-label="شبیه‌سازی مردمک دو چشم">
+      <rect width="900" height="300" fill="#EFEBE3"/>
+      ${eye('R', 250)}
+      ${eye('L', 650)}
+      <text x="250" y="258" text-anchor="middle" font-size="15" fill="#3E4C58" font-family="inherit">چشم راست بیمار</text>
+      <text x="650" y="258" text-anchor="middle" font-size="15" fill="#3E4C58" font-family="inherit">چشم چپ بیمار</text>
+      <text x="450" y="286" text-anchor="middle" font-size="12.5" fill="#7A8792" font-family="inherit">نمای معاینه‌کننده روبه‌روی بیمار</text>
+    </svg>`;
+  }
+
+  function targets(){
+    const p = params();
+    const amb = ambient;
+    let stim = 0.28 * amb;
+    if (torch === 'R') stim = Math.max(stim, 0.30 * amb + 1.0 * (1 - p.affR));
+    if (torch === 'L') stim = Math.max(stim, 0.30 * amb + 1.0 * (1 - p.affL));
+    stim = clamp(stim, 0, 1);
+    const floor = m => 2.0 + 0.15 * (8 - m);
+    const fR = floor(p.maxR), fL = floor(p.maxL);
+    const tR = p.maxR - (p.maxR - fR) * stim * (1 - p.effR);
+    const tL = p.maxL - (p.maxL - fL) * stim * (1 - p.effL);
+    return { tR: clamp(tR, fR, p.maxR), tL: clamp(tL, fL, p.maxL), p };
+  }
+
+  function frame(now){
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now;
+    const { tR, tL, p } = targets();
+    const step = (cur, tgt, tauC, tauD) => {
+      const tau = tgt < cur ? tauC : tauD;
+      return cur + (tgt - cur) * (1 - Math.exp(-dt / tau));
+    };
+    st.dR = step(st.dR, tR, 0.13, p.dilTauR);
+    st.dL = step(st.dL, tL, 0.13, p.dilTauL);
+    paint(p);
+    raf = requestAnimationFrame(frame);
+  }
+
+  const PX_PER_MM = 6.4;
+  function paint(p){
+    const set = (id, a, v) => { const n = document.getElementById(id); if (n) n.setAttribute(a, v); };
+    set('pup-R', 'r', (st.dR / 2 * PX_PER_MM).toFixed(2));
+    set('pup-L', 'r', (st.dL / 2 * PX_PER_MM).toFixed(2));
+    document.getElementById('beam-R').setAttribute('opacity', torch === 'R' ? 0.5 : 0);
+    document.getElementById('beam-L').setAttribute('opacity', torch === 'L' ? 0.5 : 0);
+    document.getElementById('gl-R').setAttribute('opacity', torch === 'R' ? 0.9 : 0);
+    document.getElementById('gl-L').setAttribute('opacity', torch === 'L' ? 0.9 : 0);
+    // ptosis: lid descends
+    const lid = (id, cx, pt) => {
+      const drop = pt * 70;
+      set('lid-' + id, 'd', `M ${cx - 106} ${150 - 0} Q ${cx} ${60 + drop * 1.4} ${cx + 106} ${150} L ${cx + 106} ${78} L ${cx - 106} ${78} Z`);
+    };
+    lid('R', 250, p.ptR); lid('L', 650, p.ptL);
+    // gaze: down and out for CN III (patient's right eye deviates to the patient's right = screen left)
+    const gaze = (id, g, dirX) => {
+      const n = document.getElementById('glob-' + id);
+      if (n) n.setAttribute('transform', `translate(${g * dirX * 26},${g * 16})`);
+    };
+    gaze('R', p.gazeR, -1); gaze('L', p.gazeL, 1);
+
+    el('n-rd').textContent = fa(st.dR.toFixed(1)) + ' mm';
+    el('n-ld').textContent = fa(st.dL.toFixed(1)) + ' mm';
+    el('n-aniso').textContent = fa(Math.abs(st.dR - st.dL).toFixed(1)) + ' mm';
+    el('n-side').textContent = torch === 'R' ? 'چشم راست' : (torch === 'L' ? 'چشم چپ' : 'خاموش');
+    el('n-meta').textContent = torch ? ('نور روی ' + (torch === 'R' ? 'چشم راست' : 'چشم چپ')) : 'نور خاموش';
+  }
+
+  function setTorch(s){
+    torch = s;
+    if (s !== null && swingTimer) { clearInterval(swingTimer); swingTimer = null; el('n-swing').textContent = 'تست چراغ نوسانی'; }
+  }
+
+  function swing(){
+    if (swingTimer) { clearInterval(swingTimer); swingTimer = null; torch = null; el('n-swing').textContent = 'تست چراغ نوسانی'; return; }
+    torch = 'R';
+    el('n-swing').textContent = 'توقف تست';
+    swingTimer = setInterval(() => { torch = (torch === 'R') ? 'L' : 'R'; }, 2500);
+  }
+
+  function pick(k){
+    key = k;
+    rapdSlider = null;
+    const p = cases[k].p;
+    el('n-rapd').value = Math.round(p.affL * 100);
+    el('n-rapd-v').textContent = fa(Math.round(p.affL * 100)) + '٪';
+    renderBridge(el('n-bridge'), cases[k].bridge);
+  }
+
+  function init(){
+    el('n-svg').innerHTML = svg();
+    buildCaseButtons(el('n-cases'), cases, key, pick);
+    el('n-torch-r').addEventListener('click', () => setTorch('R'));
+    el('n-torch-l').addEventListener('click', () => setTorch('L'));
+    el('n-torch-off').addEventListener('click', () => setTorch(null));
+    el('n-swing').addEventListener('click', swing);
+    el('n-rapd').addEventListener('input', e => {
+      rapdSlider = +e.target.value / 100;
+      el('n-rapd-v').textContent = fa(e.target.value) + '٪';
+      if (key !== 'rapd') { key = 'rapd'; [...el('n-cases').children].forEach((c, i) => c.setAttribute('aria-pressed', String(i === 1))); renderBridge(el('n-bridge'), cases.rapd.bridge); }
+    });
+    el('n-amb').addEventListener('input', e => { ambient = +e.target.value / 100; el('n-amb-v').textContent = fa(e.target.value) + '٪'; });
+    renderBridge(el('n-bridge'), cases[key].bridge);
+    last = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+
+  return { init };
+})();
+
+/* ================================================================
+   Anat — shared anatomical drawing for the examination modules.
+
+   The face is not a set of stored expressions. It is driven by facial
+   action units: brow lowering, orbital tightening, levator contraction
+   and eye closure. Pain intensity is mapped onto those units with the
+   Prkachin and Solomon weighting, so the expression is generated the
+   same way every other sign in this prototype is.
+   ================================================================ */
+const Anat = (function () {
+
+  const SKIN_DEFS = `
+  <defs>
+    <linearGradient id="ana-skin" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#D9A379"/><stop offset=".30" stop-color="#F0CFAD"/>
+      <stop offset=".62" stop-color="#EDC8A4"/><stop offset="1" stop-color="#D49E72"/>
+    </linearGradient>
+    <linearGradient id="ana-skin-v" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2D5B6"/><stop offset="1" stop-color="#E0B287"/>
+    </linearGradient>
+    <radialGradient id="ana-bulge" cx=".5" cy=".38" r=".62">
+      <stop offset="0" stop-color="#FBE4CC" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#FBE4CC" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ana-shade" cx=".5" cy=".5" r=".5">
+      <stop offset=".55" stop-color="#A9714A" stop-opacity="0"/>
+      <stop offset="1" stop-color="#A9714A" stop-opacity=".38"/>
+    </radialGradient>
+    <linearGradient id="ana-iris" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7A5836"/><stop offset=".55" stop-color="#5C3F24"/>
+      <stop offset="1" stop-color="#3E2A17"/>
+    </linearGradient>
+  </defs>`;
+
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function set(id, a, v) { const n = document.getElementById(id); if (n) n.setAttribute(a, v); }
+  function pathStr(pts) {
+    return pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join(' ');
+  }
+
+  /* ---------------- eye ----------------
+     Drawn in its own 0..200 x 0..120 local box, placed by a transform.
+     gaze h/v in degrees; lid 0..1 ptosis; closure 0..1; pupil in mm. */
+  function eyeMarkup(p, cx, cy, scale) {
+    return `
+    <g id="${p}-eye" transform="translate(${cx},${cy}) scale(${scale})">
+      <path id="${p}-socket" d="" fill="#C79878" opacity=".30"/>
+      <clipPath id="${p}-clip"><path id="${p}-clipPath" d=""/></clipPath>
+      <path id="${p}-sclera" d="" fill="#FCFAF6"/>
+      <g clip-path="url(#${p}-clip)">
+        <ellipse id="${p}-vessel1" cx="-60" cy="8" rx="34" ry="3" fill="#D98C86" opacity=".45"/>
+        <ellipse id="${p}-vessel2" cx="58" cy="-6" rx="28" ry="2.4" fill="#D98C86" opacity=".38"/>
+        <g id="${p}-globe">
+          <circle id="${p}-iris" cx="0" cy="0" r="40" fill="url(#ana-iris)"/>
+          <circle cx="0" cy="0" r="40" fill="none" stroke="#2B1C0D" stroke-width="2.5" id="${p}-limbus"/>
+          <circle id="${p}-pupil" cx="0" cy="0" r="13" fill="#0E0C0A"/>
+          <circle id="${p}-glint" cx="-13" cy="-14" r="6" fill="#fff" opacity=".9"/>
+        </g>
+        <path id="${p}-upperlid" d="" fill="#E8C1A0"/>
+        <path id="${p}-lowerlid" d="" fill="#EBC7A6"/>
+      </g>
+      <path id="${p}-outline" d="" fill="none" stroke="#3A2A1E" stroke-width="3.4" stroke-linejoin="round"/>
+      <path id="${p}-crease" d="" fill="none" stroke="#B98F6D" stroke-width="2.4" opacity="0"/>
+      <path id="${p}-lashes" d="" fill="none" stroke="#2C1F16" stroke-width="4.6" stroke-linecap="round"/>
+    </g>`;
+  }
+
+  const EYE_RX = 92, EYE_RY = 52;
+  function almond(rx, ry, lidDrop, lowerRise) {
+    const top = [], bot = [];
+    for (let i = 0; i <= 40; i++) {
+      const u = -1 + 2 * i / 40;
+      const k = Math.pow(Math.max(0, 1 - u * u), 0.58);
+      const yb = ry * Math.pow(Math.max(0, 1 - u * u), 0.86) - lowerRise * (1 - u * u);
+      let yt = -ry * k + lidDrop * (1 - u * u * 0.35);
+      top.push([u * rx, Math.min(yt, yb - 0.6)]);
+    }
+    for (let i = 40; i >= 0; i--) {
+      const u = -1 + 2 * i / 40;
+      bot.push([u * rx, ry * Math.pow(Math.max(0, 1 - u * u), 0.86) - lowerRise * (1 - u * u)]);
+    }
+    return { top: top, all: top.concat(bot) };
+  }
+
+  /* st: { h, v, pupil, ptosis, closure, tighten, red } */
+  function paintEye(p, st) {
+    // a relaxed lid already sits across the top of the iris; leaving this out
+    // gave every patient a permanently startled stare
+    const REST_LID = EYE_RY * 0.30;
+    const lidDrop = REST_LID + (st.ptosis || 0) * EYE_RY * 1.10 + (st.tighten || 0) * EYE_RY * 0.32
+                  + (st.closure || 0) * EYE_RY * 0.90;
+    const lowerRise = (st.tighten || 0) * EYE_RY * 0.30 + (st.closure || 0) * EYE_RY * 0.55;
+    const a = almond(EYE_RX, EYE_RY, lidDrop, lowerRise);
+    const d = pathStr(a.all) + ' Z';
+    set(p + '-sclera', 'd', d);
+    set(p + '-clipPath', 'd', d);
+    set(p + '-outline', 'd', d);
+    set(p + '-lashes', 'd', pathStr(a.top));
+    set(p + '-socket', 'd', pathStr(almond(EYE_RX * 1.18, EYE_RY * 1.30, 0, 0).all) + ' Z');
+
+    // gaze: degrees to local units, limited so the iris stays behind the lids.
+    // h is positive towards the PATIENT's right, and the examiner faces the
+    // patient, so a positive h moves the pupil to the LEFT of the screen.
+    const gx = clamp(-(st.h || 0) * 1.55, -70, 70);
+    const gy = clamp(-(st.v || 0) * 1.30, -46, 46);
+    set(p + '-globe', 'transform', `translate(${gx.toFixed(2)},${gy.toFixed(2)})`);
+    const pr = clamp((st.pupil === undefined ? 4 : st.pupil) / 2 * 6.6, 2.4, 34);
+    set(p + '-pupil', 'r', pr.toFixed(2));
+    set(p + '-glint', 'opacity', st.closure > 0.6 ? 0 : 0.9);
+    const crease = [];
+    for (let i = 0; i <= 20; i++) {
+      const u = -1 + 2 * i / 20;
+      crease.push([u * EYE_RX * 0.92, -EYE_RY * 1.28 + lidDrop * 0.55 + 8 * u * u]);
+    }
+    set(p + '-crease', 'd', pathStr(crease));
+    set(p + '-crease', 'opacity', clamp(0.25 + (st.tighten || 0), 0, 1) * 0.8);
+    set(p + '-vessel1', 'opacity', ((st.red || 0) * 0.75).toFixed(2));
+    set(p + '-vessel2', 'opacity', ((st.red || 0) * 0.62).toFixed(2));
+  }
+
+  /* ---------------- face ----------------
+     Local box roughly 0..360 wide, 0..430 tall, centred on (180,205). */
+  function faceMarkup(p, x, y, scale) {
+    return `
+    <g id="${p}-face" transform="translate(${x},${y}) scale(${scale})">
+      <ellipse cx="62" cy="205" rx="13" ry="24" fill="url(#ana-skin)" stroke="#B07C55" stroke-width="1.8"/>
+      <ellipse cx="298" cy="205" rx="13" ry="24" fill="url(#ana-skin)" stroke="#B07C55" stroke-width="1.8"/>
+      <path d="M 180 24 C 258 24 300 92 300 178 C 300 274 254 384 180 384 C 106 384 60 274 60 178 C 60 92 102 24 180 24 Z"
+            fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+      <ellipse cx="180" cy="200" rx="120" ry="160" fill="url(#ana-shade)" opacity=".5"/>
+      <path d="M 64 132 C 76 58 126 28 180 28 C 234 28 284 58 296 132 C 272 82 232 62 180 62 C 128 62 88 82 64 132 Z"
+            fill="#4A382B"/>
+      <g id="${p}-furrowR" opacity="0">
+        <path d="M 104 106 C 128 96 158 92 178 92" fill="none" stroke="#B2764C" stroke-width="3" opacity=".85"/>
+        <path d="M 100 128 C 126 117 158 113 178 113" fill="none" stroke="#B2764C" stroke-width="3" opacity=".72"/>
+        <path d="M 106 149 C 130 139 158 135 178 135" fill="none" stroke="#B2764C" stroke-width="2.6" opacity=".6"/>
+      </g>
+      <g id="${p}-furrowL" opacity="0">
+        <path d="M 182 92 C 202 92 232 96 256 106" fill="none" stroke="#B2764C" stroke-width="3" opacity=".85"/>
+        <path d="M 182 113 C 202 113 234 117 260 128" fill="none" stroke="#B2764C" stroke-width="3" opacity=".72"/>
+        <path d="M 182 135 C 202 135 230 139 254 149" fill="none" stroke="#B2764C" stroke-width="2.6" opacity=".6"/>
+      </g>
+      <g id="${p}-glabella" opacity="0">
+        <path d="M 170 148 L 167 178" fill="none" stroke="#A96C43" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M 191 148 L 194 178" fill="none" stroke="#A96C43" stroke-width="3.4" stroke-linecap="round"/>
+      </g>
+      <path id="${p}-browL" d="" fill="#41301F"/>
+      <path id="${p}-browR" d="" fill="#41301F"/>
+      ${eyeMarkup(p + 'eL', 120, 196, 0.46)}
+      ${eyeMarkup(p + 'eR', 240, 196, 0.46)}
+      <path d="M 186 196 C 184 228 186 250 194 266 C 188 272 176 272 170 266 C 176 248 178 226 176 196 Z"
+            fill="#FBE4CC" opacity=".30"/>
+      <path id="${p}-nose" d="M 163 268 C 156 274 158 283 168 284 C 174 284 177 279 180 279 C 183 279 186 284 192 284 C 202 283 204 274 197 268"
+            fill="none" stroke="#B07C55" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
+      <ellipse cx="168" cy="277" rx="5.2" ry="3.2" fill="#8B5A38" opacity=".6" transform="rotate(-14 168 277)"/>
+      <ellipse cx="192" cy="277" rx="5.2" ry="3.2" fill="#8B5A38" opacity=".6" transform="rotate(14 192 277)"/>
+      <g id="${p}-nasowrinkle" opacity="0">
+        <path d="M 162 250 C 172 244 188 244 198 250" fill="none" stroke="#A96C43" stroke-width="2.8"/>
+        <path d="M 166 238 C 174 233 186 233 194 238" fill="none" stroke="#A96C43" stroke-width="2.4" opacity=".8"/>
+      </g>
+      <path id="${p}-nlfL" d="" fill="none" stroke="#B07C55" stroke-width="2.6" stroke-linecap="round" opacity=".4"/>
+      <path id="${p}-nlfR" d="" fill="none" stroke="#B07C55" stroke-width="2.6" stroke-linecap="round" opacity=".4"/>
+      <path id="${p}-mouthDark" d="" fill="#57231F"/>
+      <path id="${p}-lipUpper" d="" fill="#B4695E"/>
+      <path id="${p}-lipLower" d="" fill="#C87B6E"/>
+      <path id="${p}-teeth" d="" fill="#F6F1E7" opacity="0"/>
+      <path d="M 140 352 C 158 366 202 366 220 352" fill="none" stroke="#B07C55" stroke-width="2.4" opacity=".45"/>
+    </g>`;
+  }
+
+  /* Facial action units, 0..1 each:
+     au4 brow lowering, au6 orbital tightening, au9 levator (nose/upper lip),
+     au43 eye closure, browRaise, mouthPull (-1 left .. +1 right), jaw 0..1.
+     weak: { side:'R'|'L'|null, upper:0..1, lower:0..1 } for facial nerve palsy. */
+  function paintFace(p, f) {
+    const au4 = clamp(f.au4 || 0, 0, 1), au6 = clamp(f.au6 || 0, 0, 1);
+    const au9 = clamp(f.au9 || 0, 0, 1), au43 = clamp(f.au43 || 0, 0, 1);
+    const raise = clamp(f.browRaise || 0, 0, 1);
+    const jaw = clamp(f.jaw || 0, 0, 1);
+    const pull = clamp(f.mouthPull || 0, -1, 1);
+    const w = f.weak || { side: null, upper: 0, lower: 0 };
+    // 'L' and 'R' below are the PATIENT's sides; the patient's right eye is
+    // drawn on the viewer's left, which is what a real examiner sees.
+    const wUpper = s => (w.side === s ? w.upper : 0);
+    const wLower = s => (w.side === s ? w.lower : 0);
+
+    function brow(side) {
+      const dir = side === 'R' ? -1 : 1;          // patient's right is screen left
+      const cx = 180 + dir * 60;
+      const up = raise * (1 - wUpper(side)) * 26;
+      const down = au4 * 22;
+      const inner = [cx - dir * 40, 166 - up + down];
+      const mid   = [cx,            152 - up * 1.15 + down * 0.55];
+      const outer = [cx + dir * 42, 162 - up * 0.75 + down * 0.15 + wUpper(side) * 10];
+      const th = 11 + raise * 1.5;
+      const top = `M ${inner[0]} ${inner[1]} Q ${mid[0]} ${mid[1] - 8} ${outer[0]} ${outer[1]}`;
+      const bot = `Q ${mid[0]} ${mid[1] + th} ${inner[0]} ${inner[1] + th - 1} Z`;
+      return top + ' ' + bot;
+    }
+    set(p + '-browR', 'd', brow('R'));
+    set(p + '-browL', 'd', brow('L'));
+
+    // forehead furrows only appear if frontalis actually contracts
+    // frontalis is what wrinkles the forehead, so a weak side simply stays smooth
+    set(p + '-furrowR', 'opacity', (raise * (1 - wUpper('R'))).toFixed(2));
+    set(p + '-furrowL', 'opacity', (raise * (1 - wUpper('L'))).toFixed(2));
+    set(p + '-glabella', 'opacity', au4.toFixed(2));
+    set(p + '-nasowrinkle', 'opacity', au9.toFixed(2));
+
+    const eyeState = side => ({
+      h: (f.gaze && f.gaze[side] ? f.gaze[side].h : 0),
+      v: (f.gaze && f.gaze[side] ? f.gaze[side].v : 0) + (f.bell && wUpper(side) > 0.4 ? 22 : 0),
+      pupil: (f.pupil && f.pupil[side] !== undefined) ? f.pupil[side] : 4,
+      ptosis: (f.ptosis && f.ptosis[side]) || 0,
+      closure: clamp(au43 * (1 - wUpper(side) * 0.92), 0, 1),
+      tighten: clamp(au6 * (1 - wUpper(side) * 0.85), 0, 1),
+      red: f.red || 0
+    });
+    paintEye(p + 'eR', eyeState('R'));
+    paintEye(p + 'eL', eyeState('L'));
+
+    // nasolabial fold: deepens with the levator, flattens on a weak side
+    function nlf(side) {
+      const dir = side === 'R' ? -1 : 1;
+      const depth = clamp(0.30 + au9 * 0.7 + Math.max(0, pull * dir) * 0.5, 0, 1) * (1 - wLower(side) * 0.9);
+      const x0 = 180 + dir * 26, y0 = 274;
+      const x1 = 180 + dir * (48 + depth * 8), y1 = 300;
+      const x2 = 180 + dir * (42 + depth * 6), y2 = 326 + wLower(side) * 12;
+      set(p + '-nlf' + side, 'd', `M ${x0} ${y0} Q ${x1} ${y1} ${x2} ${y2}`);
+      set(p + '-nlf' + side, 'opacity', (0.15 + depth * 0.7).toFixed(2));
+    }
+    nlf('R'); nlf('L');
+
+    // mouth: corners move independently so a weak side simply fails to lift
+    const open = jaw * 34 + au9 * 8;
+    const cornerY = s => 318 + wLower(s) * 22 - Math.max(0, pull * (s === 'R' ? -1 : 1)) * 16
+                        - (f.smile || 0) * (1 - wLower(s)) * 20;
+    const cornerX = s => 180 + (s === 'R' ? -1 : 1) * (46 + (f.smile || 0) * (1 - wLower(s)) * 14
+                        + (f.puff || 0) * 6);
+    const rX = cornerX('R'), rY = cornerY('R'), lX = cornerX('L'), lY = cornerY('L');
+    const midY = (rY + lY) / 2;
+    const upTop = `M ${rX} ${rY} Q ${180 - 22} ${midY - 12 - au9 * 10} 180 ${midY - 8 - au9 * 9} Q ${180 + 22} ${midY - 12 - au9 * 10} ${lX} ${lY}`;
+    set(p + '-lipUpper', 'd', upTop + ` Q 180 ${midY + 4} ${rX} ${rY} Z`);
+    set(p + '-lipLower', 'd', `M ${rX} ${rY} Q 180 ${midY + 16 + open} ${lX} ${lY} Q 180 ${midY + 6 + open * 0.4} ${rX} ${rY} Z`);
+    set(p + '-mouthDark', 'd', open > 3
+      ? `M ${rX} ${rY} Q 180 ${midY - 6 - open * 0.5} ${lX} ${lY} Q 180 ${midY + 10 + open} ${rX} ${rY} Z`
+      : `M ${rX} ${rY} Q 180 ${midY} ${lX} ${lY} Q 180 ${midY + 1} ${rX} ${rY} Z`);
+    set(p + '-teeth', 'opacity', (f.smile || 0) > 0.4 ? 0.95 : 0);
+    set(p + '-teeth', 'd', `M ${rX + 10} ${midY - 4} Q 180 ${midY - 14} ${lX - 10} ${midY - 4} Q 180 ${midY + 6} ${rX + 10} ${midY - 4} Z`);
+  }
+
+  /* pain 0..10 -> action units, weighted the way the Prkachin and Solomon
+     pain intensity score weights them */
+  function painToUnits(pain) {
+    const x = clamp(pain / 10, 0, 1);
+    return {
+      au4: clamp(x * 1.30, 0, 1),
+      au6: clamp(x * 1.15, 0, 1),
+      au9: clamp((pain - 2.5) / 7.5, 0, 1),
+      au43: clamp((pain - 6.6) / 3.4, 0, 1),
+      jaw: clamp((pain - 3.5) / 6.5, 0, 1) * 0.85
+    };
+  }
+
+  /* ---------------- supine body ----------------
+     Seen from above, as the examiner stands at the patient's right. The
+     abdominal field runs from the subcostal margin to just above the pubis;
+     everything below the iliac crests is draped, which is both how a real
+     examination is done and why nothing indecent has to be drawn. */
+  const B = { x: 192, y: 384, w: 240, h: 276 };
+  const REG = [['rhc', 0, 0], ['epi', 1, 0], ['lhc', 2, 0],
+               ['rfl', 0, 1], ['umb', 1, 1], ['lfl', 2, 1],
+               ['rif', 0, 2], ['sup', 1, 2], ['lif', 2, 2]];
+
+  function bodyMarkup(p) {
+    const cw = B.w / 3, ch = B.h / 3;
+    const cells = REG.map(([k, c, r]) => `
+      <rect id="${p}-rg-${k}" x="${(B.x + c * cw).toFixed(1)}" y="${(B.y + r * ch).toFixed(1)}"
+            width="${cw.toFixed(1)}" height="${ch.toFixed(1)}"
+            fill="#FFFFFF" fill-opacity="0.001" stroke="#A8764E" stroke-opacity=".26" stroke-width="1.1"
+            style="cursor:crosshair"/>`).join('');
+    return `
+    <svg viewBox="0 0 620 840" style="width:100%;height:auto" role="img" aria-label="بیمار در وضعیت خوابیده به پشت روی تخت معاینه">
+      ${SKIN_DEFS}
+      <rect width="620" height="840" fill="#E7E2D9"/>
+      <rect x="26" y="16" width="568" height="808" rx="22" fill="#F1EDE5" stroke="#C9C2B5" stroke-width="2"/>
+      <rect x="44" y="30" width="532" height="176" rx="18" fill="#E4DFD5"/>
+      <ellipse cx="310" cy="470" rx="212" ry="300" fill="#000" opacity=".045"/>
+      <g id="${p}-body">
+        <!-- arms lie beside the trunk -->
+        <path d="M 150 262 C 112 292 100 366 104 452 C 107 528 118 586 130 622 L 182 612 C 170 566 163 506 165 444 C 168 372 180 312 196 282 Z"
+              fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+        <path d="M 470 262 C 508 292 520 366 516 452 C 513 528 502 586 490 622 L 438 612 C 450 566 457 506 455 444 C 452 372 440 312 424 282 Z"
+              fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+        <path d="M 130 622 C 112 640 116 668 138 676 C 160 683 180 670 182 646 L 182 612 Z" fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+        <path d="M 490 622 C 508 640 504 668 482 676 C 460 683 440 670 438 646 L 438 612 Z" fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+        <!-- neck -->
+        <path d="M 272 158 L 272 206 C 250 214 236 224 228 238 L 392 238 C 384 224 370 214 348 206 L 348 158 Z"
+              fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+        <path d="M 272 196 C 292 208 328 208 348 196" fill="none" stroke="#B07C55" stroke-width="2" opacity=".5"/>
+        <g id="${p}-trunk">
+          <!-- trunk silhouette: shoulders, waist, hips -->
+          <path d="M 310 214
+                   C 372 214 428 232 452 262
+                   C 468 306 470 366 462 424
+                   C 452 486 444 540 446 590
+                   C 448 640 442 676 432 700
+                   L 188 700
+                   C 178 676 172 640 174 590
+                   C 176 540 168 486 158 424
+                   C 150 366 152 306 168 262
+                   C 192 232 248 214 310 214 Z"
+                fill="url(#ana-skin)" stroke="#B07C55" stroke-width="2"/>
+          <ellipse cx="310" cy="440" rx="150" ry="230" fill="url(#ana-shade)" opacity=".45"/>
+          <g id="${p}-chest">
+            <ellipse cx="310" cy="320" rx="128" ry="86" fill="url(#ana-bulge)" opacity=".65"/>
+            <path d="M 236 252 C 268 264 352 264 384 252" fill="none" stroke="#C08B60" stroke-width="2.6" opacity=".55"/>
+            <path d="M 310 262 L 310 372" fill="none" stroke="#C08B60" stroke-width="2.2" opacity=".4"/>
+            <path d="M 196 300 C 226 336 268 366 306 374" fill="none" stroke="#BC8459" stroke-width="3.2" opacity=".6"/>
+            <path d="M 424 300 C 394 336 352 366 314 374" fill="none" stroke="#BC8459" stroke-width="3.2" opacity=".6"/>
+          </g>
+          <ellipse cx="310" cy="510" rx="118" ry="132" fill="url(#ana-bulge)" opacity=".5"/>
+          <g id="${p}-recti" opacity="0">
+            <rect x="256" y="392" width="50" height="252" rx="22" fill="#C9976C" opacity=".8"/>
+            <rect x="314" y="392" width="50" height="252" rx="22" fill="#C9976C" opacity=".8"/>
+            <path d="M 256 452 L 306 452 M 256 518 L 306 518 M 256 584 L 306 584
+                     M 314 452 L 364 452 M 314 518 L 364 518 M 314 584 L 364 584"
+                  stroke="#AE7C55" stroke-width="3" opacity=".75"/>
+          </g>
+          <ellipse cx="310" cy="508" rx="10" ry="12" fill="#C08B60" opacity=".5"/>
+          <ellipse cx="310" cy="508" rx="5.5" ry="7" fill="#A56D45" opacity=".6"/>
+          <ellipse cx="196" cy="636" rx="15" ry="10" fill="#C08B60" opacity=".4"/>
+          <ellipse cx="424" cy="636" rx="15" ry="10" fill="#C08B60" opacity=".4"/>
+          ${cells}
+        </g>
+        <!-- drape from the iliac crests down -->
+        <path d="M 168 682 C 240 664 380 664 452 682 L 470 840 L 150 840 Z" fill="#DCE4E6" stroke="#B9C5C8" stroke-width="2"/>
+        <path d="M 176 706 C 250 690 370 690 444 706" fill="none" stroke="#B9C5C8" stroke-width="2" opacity=".8"/>
+        <path d="M 246 700 L 236 840 M 384 700 L 394 840" fill="none" stroke="#C6D0D2" stroke-width="2.4" opacity=".8"/>
+      </g>
+      ${faceMarkup(p + 'f', 227, 4, 0.46)}
+      <g id="${p}-hand" opacity="0">
+        <path id="${p}-handPath" d="" fill="#EACAA8" stroke="#9C6A45" stroke-width="2.2" stroke-linejoin="round"/>
+      </g>
+      <text x="310" y="790" text-anchor="middle" font-size="17" fill="#7A8792" font-family="inherit">سمت راست بیمار در چپ تصویر است</text>
+      <text x="310" y="816" text-anchor="middle" font-size="14.5" fill="#9AA6B0" font-family="inherit">لمس شبیه‌سازی نمی‌شود؛ واکنش بیمار به لمس شبیه‌سازی می‌شود</text>
+    </svg>`;
+  }
+
+  function regionCentre(k) {
+    const r = REG.find(x => x[0] === k);
+    if (!r) return [310, 452];
+    return [B.x + r[1] * (B.w / 3) + B.w / 6, B.y + r[2] * (B.h / 3) + B.h / 6];
+  }
+
+  /* st: { pain, guard, breath 0..1, pressed, arrest } */
+  function paintBody(p, st) {
+    const f = painToUnits(st.pain || 0);
+    f.red = clamp((st.pain || 0) / 14, 0, 0.6);
+    paintFace(p + 'f', f);
+
+    const excursion = (1 - clamp(st.guard || 0, 0, 1) * 0.78);
+    const b = (st.breath || 0) * excursion;
+    set(p + '-chest', 'transform', `translate(0,${(-b * 7).toFixed(2)}) scale(1,${(1 + b * 0.018).toFixed(4)})`);
+    set(p + '-trunk', 'transform', `translate(0,${(-b * 2.4).toFixed(2)})`);
+    set(p + '-recti', 'opacity', (clamp(st.guard || 0, 0, 1) * 0.92).toFixed(2));
+
+    REG.forEach(([k]) => {
+      const n = document.getElementById(p + '-rg-' + k);
+      if (!n) return;
+      const on = st.pressed === k;
+      n.setAttribute('fill', on ? (st.pain > 5 ? '#C0504A' : (st.pain > 2 ? '#C89A4A' : '#5C8F72')) : '#FFFFFF');
+      n.setAttribute('fill-opacity', on ? 0.42 : 0.001);
+      n.setAttribute('stroke-opacity', on ? 0.85 : 0.26);
+      n.setAttribute('stroke', on ? (st.pain > 5 ? '#8E2F29' : '#8A6420') : '#A8764E');
+    });
+
+    const hand = document.getElementById(p + '-hand');
+    const hp = document.getElementById(p + '-handPath');
+    if (hand && hp) {
+      if (st.pressed) {
+        const c = regionCentre(st.pressed), cx = c[0], cy = c[1] + 52;
+        // palm plus four fingers pointing up the patient, thumb tucked left
+        let d = `M ${cx - 40} ${cy + 60} C ${cx - 48} ${cy + 26} ${cx - 46} ${cy - 2} ${cx - 40} ${cy - 14} `;
+        for (let i = 0; i < 4; i++) {
+          const fx = cx - 30 + i * 20;
+          const len = [40, 52, 50, 38][i];
+          d += `L ${fx - 8} ${cy - 16} C ${fx - 9} ${cy - 16 - len} ${fx + 9} ${cy - 16 - len} ${fx + 8} ${cy - 16} `;
+        }
+        d += `L ${cx + 42} ${cy - 12} C ${cx + 50} ${cy + 4} ${cx + 50} ${cy + 34} ${cx + 40} ${cy + 58} Z`;
+        hp.setAttribute('d', d);
+        hand.setAttribute('opacity', 0.88);
+      } else {
+        hand.setAttribute('opacity', 0);
+      }
+    }
+  }
+
+  return {
+    defs: SKIN_DEFS, eyeMarkup: eyeMarkup, paintEye: paintEye,
+    faceMarkup: faceMarkup, paintFace: paintFace, painToUnits: painToUnits,
+    bodyMarkup: bodyMarkup, paintBody: paintBody, regionCentre: regionCentre,
+    REGIONS: REG
+  };
+})();
+
+/* ================================================================
+   Mot — ocular motility engine (see verify_motility.js for the checks)
+   ================================================================ */
+const Mot = (function () {
+function mclamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+const MUSCLES = ['LR', 'MR', 'SR', 'IR', 'IO', 'SO'];
+
+/* ---- calibrated constants -------------------------------------------
+   These four numbers are FITTED, not derived. They were chosen by grid
+   search so that the deviations the model produces fall inside published
+   clinical ranges (sixth nerve esotropia, fourth nerve hypertropia and its
+   incomitance, residual deviation away from the palsied field). Anyone
+   changing them should re-run verify_motility.js.
+   ------------------------------------------------------------------ */
+const TONE = 0.269;        // resting tone of a fully innervated muscle
+const K_H = 101.1, K_V = 101.1;   // degrees of rotation per unit net force
+const PASSIVE = 1.913;     // peak passive elastic pull of orbital tissues
+const P_EXP = 2.53;         // the passive spring stiffens sharply off centre
+const LT = 0.955;          // active force falls as a muscle shortens
+const LIMIT = 45;
+
+function fullStrength() {
+  const o = {};
+  MUSCLES.forEach(m => o[m] = 1);
+  return o;
+}
+
+/* Capacity of this eye in each cardinal direction.
+   side: +1 right eye, -1 left eye. hWorld: gaze angle, + towards the patient's right. */
+function capacity(side, m, hWorld) {
+  const abduction = side * hWorld;
+  const g = mclamp((abduction + 25) / 50, 0, 1);   // 0 fully adducted, 1 fully abducted
+  return {
+    right: side > 0 ? m.LR : m.MR,
+    left:  side > 0 ? m.MR : m.LR,
+    up:    m.SR * g + m.IO * (1 - g),              // rectus works abducted, oblique adducted
+    down:  m.IR * g + m.SO * (1 - g),
+    g: g
+  };
+}
+
+/* Equilibrium angle on one axis: active force from each antagonist plus the
+   passive spring that grows as the globe leaves primary position. */
+function netForce(capPos, capNeg, u, K, x) {
+  const sp = Math.pow(Math.max(0, -x) / LIMIT, P_EXP);
+  const sn = Math.pow(Math.max(0,  x) / LIMIT, P_EXP);
+  const fp = capPos * (TONE + Math.max(0,  u)) * (1 - LT * Math.max(0,  x) / LIMIT) + PASSIVE * sp;
+  const fn = capNeg * (TONE + Math.max(0, -u)) * (1 - LT * Math.max(0, -x) / LIMIT) + PASSIVE * sn;
+  return K * (fp - fn) - x;
+}
+
+/* Net force is strictly decreasing in x, so bisect for the root. An earlier
+   version used a damped fixed-point iteration; with a stiff passive spring it
+   oscillated at high innervation and silently returned the wrong angle. */
+function equilibrium(capPos, capNeg, u, K) {
+  if (netForce(capPos, capNeg, u, K, -LIMIT) <= 0) return -LIMIT;
+  if (netForce(capPos, capNeg, u, K,  LIMIT) >= 0) return  LIMIT;
+  let lo = -LIMIT, hi = LIMIT;
+  for (let i = 0; i < 44; i++) {
+    const m = (lo + hi) / 2;
+    if (netForce(capPos, capNeg, u, K, m) > 0) lo = m; else hi = m;
+  }
+  return (lo + hi) / 2;
+}
+
+function solveInnervation(target, f) {
+  let lo = -3, hi = 3;
+  for (let i = 0; i < 34; i++) {
+    const mid = (lo + hi) / 2;
+    if (f(mid) < target) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function eyePosition(side, m, uH, uV) {
+  const c0 = capacity(side, m, 0);
+  const h = equilibrium(c0.right, c0.left, uH, K_H);
+  const c = capacity(side, m, h);
+  const v = equilibrium(c.up, c.down, uV, K_V);
+  return { h: h, v: v, g: c.g };
+}
+
+function restingPosition(side, m) {
+  return eyePosition(side, m, 0, 0);
+}
+
+/* eyes: { R: strengths, L: strengths }; target in degrees; fixating: 'R' or 'L'. */
+function gaze(eyes, target, fixating) {
+  const side = { R: 1, L: -1 };
+  const F = fixating, O = (F === 'R') ? 'L' : 'R';
+  const sF = side[F];
+
+  const uH = solveInnervation(target.h, u => eyePosition(sF, eyes[F], u, 0).h);
+  const hF = eyePosition(sF, eyes[F], uH, 0).h;
+  const cF = capacity(sF, eyes[F], hF);
+  const uV = solveInnervation(target.v, u => equilibrium(cF.up, cF.down, u, K_V));
+
+  // the identical command reaches both eyes (Hering's law of equal innervation)
+  const posF = eyePosition(sF, eyes[F], uH, uV);
+  const posO = eyePosition(side[O], eyes[O], uH, uV);
+
+  const out = {};
+  out[F] = { h: posF.h, v: posF.v };
+  out[O] = { h: posO.h, v: posO.v };
+  out.innervation = { h: uH, v: uV };
+  out.deviation = { h: out.R.h - out.L.h, v: out.R.v - out.L.v };
+  return out;
+}
+
+const PRISM = 1.75;   // degrees to prism dioptres, small angle
+
+function weak(over) { return Object.assign(fullStrength(), over); }
+
+const POSITIONS = [
+  { k: 'ul', h: -24, v: 18, fa: 'بالا-چپ' }, { k: 'u', h: 0, v: 22, fa: 'بالا' }, { k: 'ur', h: 24, v: 18, fa: 'بالا-راست' },
+  { k: 'l',  h: -30, v: 0,  fa: 'چپ' },      { k: 'c', h: 0, v: 0,  fa: 'وسط' }, { k: 'r',  h: 30, v: 0,  fa: 'راست' },
+  { k: 'dl', h: -24, v: -18, fa: 'پایین-چپ' }, { k: 'd', h: 0, v: -22, fa: 'پایین' }, { k: 'dr', h: 24, v: -18, fa: 'پایین-راست' }
+];
+
+return { gaze: gaze, capacity: capacity, restingPosition: restingPosition,
+         full: fullStrength, weak: weak, MUSCLES: MUSCLES, POSITIONS: POSITIONS, PRISM: PRISM };
+})();
+
+/* ================================================================
+   MODULE — ABDOMINAL EXAM   (channel: patient reaction to touch)
+   Rebuilt on the shared anatomy renderer. Touch itself is still not
+   simulated; what is simulated is what the patient does about it.
+   ================================================================ */
+const Abdo = (function () {
+
+  const REGION_FA = { rhc: 'هیپوکندری راست', epi: 'اپی‌گاستر', lhc: 'هیپوکندری چپ',
+                      rfl: 'پهلوی راست', umb: 'اطراف ناف', lfl: 'پهلوی چپ',
+                      rif: 'ایلیاک راست', sup: 'سوپراپوبیک', lif: 'ایلیاک چپ' };
+  const KEYS = Object.keys(REGION_FA);
+
+  const cases = {
+    normal: { name: 'شکم طبیعی', tag: 'شاهد', organ: null, restless: false,
+      tender: () => ({}), perit: () => 0,
+      bridge: [['صفاق جداری آرام', 'گیرنده‌های درد تحریک نشده‌اند'],
+               ['بدون رفلکس نخاعی', 'قوس رفلکس دفاع عضلانی فعال نمی‌شود'],
+               ['دیواره شکم شل', 'لمس عمیق بدون مقاومت ممکن است'],
+               ['یافته بالینی', 'بدون تندرنس، بدون گاردینگ، بدون ریباند']] },
+    appy: { name: 'آپاندیسیت حاد', tag: 'مهاجرت درد', organ: 'appendix', retrocecal: false, restless: false,
+      tender: h => ({ umb: clamp(0.70 - 0.030 * h, 0.10, 0.70), rif: clamp(0.12 + 0.042 * h, 0.12, 0.95),
+                      sup: clamp(0.08 + 0.012 * h, 0.08, 0.35), rfl: clamp(0.06 + 0.010 * h, 0.06, 0.30) }),
+      perit: h => clamp((h - 8) / 26, 0, 0.85),
+      bridge: [['انسداد لومن آپاندیس', 'فکالیت یا هیپرپلازی لنفاوی تخلیه ترشح را می‌بندد'],
+               ['درد احشایی', 'اتساع لومن، آوران‌های سمپاتیک T10 را تحریک می‌کند و درد دور ناف حس می‌شود'],
+               ['گسترش به صفاق جداری', 'التهاب به صفاق مجاور می‌رسد و اعصاب سوماتیک آن را دقیق نقشه‌برداری می‌کنند'],
+               ['یافته بالینی', 'جابه‌جایی درد به ایلیاک راست، گاردینگ، و روزینگ مثبت']] },
+    chole: { name: 'کوله‌سیستیت حاد', tag: 'مورفی', organ: 'gallbladder', restless: false,
+      tender: h => ({ rhc: clamp(0.55 + 0.018 * h, 0.55, 0.95), epi: 0.45, rfl: 0.30, umb: 0.15 }),
+      perit: h => clamp(0.15 + h / 90, 0, 0.55),
+      bridge: [['انسداد مجرای سیستیک', 'سنگ در گردن کیسه صفرا گیر می‌کند'],
+               ['اتساع و التهاب دیواره', 'فشار داخل کیسه بالا می‌رود'],
+               ['تماس با صفاق جداری', 'کف کیسه ملتهب به صفاق زیر دنده‌ای راست می‌چسبد'],
+               ['یافته بالینی', 'دم عمیق هنگام فشار ربع فوقانی راست، ناگهان قطع می‌شود']] },
+    perf: { name: 'زخم پپتیک پرفوره', tag: 'صفاق منتشر', organ: 'stomach', restless: false,
+      tender: h => { const b = clamp(0.72 + 0.006 * h, 0.72, 0.95); const o = {}; KEYS.forEach(k => o[k] = b); o.epi = 0.95; return o; },
+      perit: h => clamp(0.62 + h / 60, 0, 0.98),
+      bridge: [['نقص تمام‌ضخامت دیواره', 'زخم به سروز نفوذ و سوراخ می‌شود'],
+               ['نشت محتویات اسیدی', 'شیره معده وارد حفره صفاقی می‌شود'],
+               ['پریتونیت شیمیایی منتشر', 'کل صفاق جداری هم‌زمان تحریک می‌شود'],
+               ['یافته بالینی', 'شکم تخته‌ای، تندرنس منتشر، بیمار کاملاً بی‌حرکت']] },
+    colic: { name: 'کولیک کلیوی راست', tag: 'بدون گاردینگ', organ: 'ureter', restless: true,
+      tender: () => ({ rfl: 0.85, rif: 0.40, rhc: 0.30 }), perit: () => 0.05,
+      bridge: [['انسداد حالب', 'سنگ جریان ادرار را مسدود می‌کند'],
+               ['اتساع سیستم جمع‌کننده', 'پریستالسیس شدید حالب، درد احشایی موج‌دار می‌سازد'],
+               ['صفاق درگیر نیست', 'رفلکس دفاعی فعال نمی‌شود'],
+               ['یافته بالینی', 'درد بسیار شدید با شکم نرم؛ بیمار مدام جابه‌جا می‌شود']] }
+  };
+
+  let key = 'appy', depth = 0.55, hours = 12, pressed = null, guard = 0, pain = 0;
+  let breathPhase = 0, arrest = false, raf = null, lastT = 0;
+
+  const tmap = () => cases[key].tender(hours) || {};
+  const perit = () => cases[key].perit(hours);
+  const painAt = (k, d) => clamp((tmap()[k] || 0) * (0.52 + 0.48 * (d === undefined ? depth : d)) * 10, 0, 10);
+
+  function loop(t) {
+    const dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0.016;
+    lastT = t;
+    if (!arrest) breathPhase += dt * (perit() > 0.6 ? 2.6 : 1.5);
+    const b = (Math.sin(breathPhase) * 0.5 + 0.5);
+    Anat.paintBody('ab', { pain: pain, guard: guard, breath: b, pressed: pressed });
+    raf = requestAnimationFrame(loop);
+  }
+
+  function speak(p, prefix) {
+    let s;
+    if (p < 0.6) s = 'چیزی حس نمی‌کنم.';
+    else if (p < 2.5) s = 'یک فشار خفیف است، درد ندارد.';
+    else if (p < 4.5) s = 'اینجا کمی درد دارد.';
+    else if (p < 6.5) s = 'آخ… همان‌جا درد دارد، آرام‌تر لطفاً.';
+    else if (p < 8.5) s = 'آخ! دستتان را بردارید.';
+    else s = 'نه! دست نزنید، طاقت ندارم.';
+    const marks = [];
+    if (guard > 0.75) marks.push('دیواره شکم تخته‌ای و کاملاً سفت می‌شود');
+    else if (guard > 0.35) marks.push('عضلات شکم بی‌اختیار منقبض می‌شوند');
+    if (cases[key].restless && p > 5) marks.push('بیمار مدام جابه‌جا می‌شود و نمی‌تواند آرام بگیرد');
+    else if (perit() > 0.5 && p > 5) marks.push('بیمار کاملاً بی‌حرکت دراز کشیده و نفس سطحی می‌کشد');
+    const b = el('a-say');
+    b.className = 'say' + (p < 2.5 ? ' quiet' : '');
+    b.innerHTML = `«${prefix || ''}${s}»` + (marks.length ? `<br><span style="color:var(--ink-faint);font-size:13px">${marks.join(' · ')}</span>` : '');
+  }
+
+  function report(region, label) {
+    el('a-pain').textContent = fa(pain.toFixed(1)) + ' / ۱۰';
+    el('a-guard').textContent = guard > 0.75 ? 'تخته‌ای' : (guard > 0.35 ? 'بی‌اختیار' : 'ندارد');
+    el('a-region').textContent = region || '—';
+    el('a-meta').textContent = label;
+  }
+
+  function press(k) {
+    arrest = false;
+    pressed = k;
+    pain = painAt(k);
+    guard = (perit() > 0.3 && pain > 3) ? clamp(perit(), 0, 1) : 0;
+    speak(pain);
+    report(REGION_FA[k], `لمس ${depth > 0.66 ? 'عمیق' : (depth > 0.33 ? 'متوسط' : 'سطحی')} — ${REGION_FA[k]}`);
+  }
+
+  function maneuver(m) {
+    const t = tmap(), p = perit(), organ = cases[key].organ;
+    let worst = 'umb', wv = -1;
+    KEYS.forEach(k => { const v = t[k] || 0; if (v > wv) { wv = v; worst = k; } });
+    arrest = false;
+
+    if (m === 'rebound') {
+      const onPress = painAt(worst, 0.9), onRelease = clamp(onPress * (0.55 + 0.95 * p), 0, 10);
+      const pos = p > 0.4 && onRelease > onPress + 0.8;
+      pressed = worst; pain = onRelease; guard = clamp(p, 0, 1);
+      speak(onRelease);
+      el('a-say').insertAdjacentHTML('beforeend',
+        `<br><span style="font-size:13px">هنگام فشار ${fa(onPress.toFixed(1))} · هنگام رهاسازی ${fa(onRelease.toFixed(1))} — ریباند ${pos ? 'مثبت' : 'منفی'}</span>`);
+      report(REGION_FA[worst], 'تندرنس ریباند');
+      return;
+    }
+    if (m === 'murphy') {
+      const pos = organ === 'gallbladder' && (t.rhc || 0) > 0.5;
+      pressed = 'rhc'; pain = pos ? Math.max(painAt('rhc', 0.8), 7.5) : painAt('rhc', 0.8);
+      guard = pos ? 0.4 : 0;
+      arrest = pos;                       // the breathing animation stops mid-inspiration
+      el('a-say').className = 'say' + (pos ? '' : ' quiet');
+      el('a-say').innerHTML = pos
+        ? '«آخ!»<br><span style="color:var(--ink-faint);font-size:13px">بیمار وسط دم عمیق ناگهان نفس را قطع می‌کند — علامت مورفی مثبت</span>'
+        : '«چیز خاصی نیست.»<br><span style="color:var(--ink-faint);font-size:13px">دم عمیق بدون وقفه کامل می‌شود — علامت مورفی منفی</span>';
+      report('هیپوکندری راست', 'مانور مورفی');
+      return;
+    }
+    if (m === 'rovsing') {
+      const pos = organ === 'appendix' && p > 0.2;
+      pressed = 'lif'; pain = pos ? 6.5 : 1.5; guard = 0;
+      el('a-say').className = 'say' + (pos ? '' : ' quiet');
+      el('a-say').innerHTML = pos
+        ? '«آخ، اما درد آن‌طرف است!»<br><span style="color:var(--ink-faint);font-size:13px">فشار ایلیاک چپ، درد را در ایلیاک راست ایجاد می‌کند — روزینگ مثبت</span>'
+        : '«فشار را حس می‌کنم، ولی درد ندارد.»<br><span style="color:var(--ink-faint);font-size:13px">بدون درد ارجاعی — روزینگ منفی</span>';
+      report('ایلیاک چپ', 'مانور روزینگ');
+      return;
+    }
+    if (m === 'psoas') {
+      const pos = organ === 'appendix' && (cases[key].retrocecal || p > 0.45);
+      pressed = null; pain = pos ? 6 : 1; guard = 0;
+      el('a-say').className = 'say' + (pos ? '' : ' quiet');
+      el('a-say').innerHTML = pos
+        ? '«با بالا آوردن پا درد بیشتر می‌شود.»<br><span style="color:var(--ink-faint);font-size:13px">کشش پسواس ملتهب — تست مثبت</span>'
+        : '«فرقی نکرد.»<br><span style="color:var(--ink-faint);font-size:13px">بدون تغییر درد — تست منفی</span>';
+      report('رتروسکال', 'تست پسواس');
+    }
+  }
+
+  function reset() {
+    pressed = null; guard = 0; pain = 0; arrest = false;
+    el('a-say').className = 'say quiet';
+    el('a-say').textContent = 'برای لمس، روی یکی از نه ناحیه شکم کلیک کنید.';
+    report(null, 'ناحیه‌ای لمس نشده');
+  }
+
+  function init() {
+    el('a-svg').innerHTML = Anat.bodyMarkup('ab');
+    Anat.REGIONS.forEach(([k]) => {
+      const n = document.getElementById('ab-rg-' + k);
+      if (n) n.addEventListener('click', () => press(k));
+    });
+    buildCaseButtons(el('a-cases'), cases, key, k => { key = k; reset(); renderBridge(el('a-bridge'), cases[k].bridge); });
+    el('a-depth').addEventListener('input', e => {
+      depth = +e.target.value / 100;
+      el('a-depth-v').textContent = depth > 0.66 ? 'عمیق' : (depth > 0.33 ? 'متوسط' : 'سطحی');
+      if (pressed) press(pressed);
+    });
+    el('a-hours').addEventListener('input', e => {
+      hours = +e.target.value;
+      el('a-hours-v').textContent = fa(hours) + ' ساعت';
+      if (pressed) press(pressed);
+    });
+    document.querySelectorAll('[data-man]').forEach(b => b.addEventListener('click', () => maneuver(b.dataset.man)));
+    renderBridge(el('a-bridge'), cases[key].bridge);
+    reset();
+    raf = requestAnimationFrame(loop);
+  }
+
+  return { init: init };
+})();
+
+/* ================================================================
+   MODULE — OCULAR MOTILITY AND COVER TEST   (channel: animation)
+   ================================================================ */
+const Moti = (function () {
+
+  const cases = {
+    normal: { name: 'حرکات چشمی طبیعی', tag: 'شاهد', R: Mot.full(), L: Mot.full(),
+      ptosis: { R: 0, L: 0 }, pupil: { R: 4, L: 4 },
+      bridge: [
+        ['شش عضله خارج‌چشمی', 'هر چشم با چهار راست و دو مایل حرکت می‌کند'],
+        ['قانون هرینگ', 'عضلات یوغ دو چشم عصب‌دهی یکسان دریافت می‌کنند'],
+        ['اثر وابسته به موقعیت', 'راست فوقانی در ابداکسیون و مایل تحتانی در ادداکسیون بالابرنده‌اند'],
+        ['یافته بالینی', 'هر دو چشم در هر نه جهت هم‌راستا می‌مانند']
+      ] },
+    cn6Rp: { name: 'فلج نسبی عصب ششم راست', tag: 'ازوتروپی', R: Mot.weak({ LR: 0.45 }), L: Mot.full(),
+      ptosis: { R: 0, L: 0 }, pupil: { R: 4, L: 4 },
+      bridge: [
+        ['مسیر طولانی عصب ششم', 'در امتداد شیب استخوان به فشار داخل جمجمه حساس است'],
+        ['ضعف راست خارجی', 'تنها ابداکتور چشم راست کم‌کار می‌شود'],
+        ['عدم توازن تونوس', 'راست داخلی بدون مخالف، چشم را به داخل می‌کشد'],
+        ['یافته بالینی', 'ازوتروپی که در نگاه به راست بدتر و در نگاه به چپ کمتر می‌شود']
+      ] },
+    cn6R: { name: 'فلج کامل عصب ششم راست', tag: 'ابداکسیون صفر', R: Mot.weak({ LR: 0.05 }), L: Mot.full(),
+      ptosis: { R: 0, L: 0 }, pupil: { R: 4, L: 4 },
+      bridge: [
+        ['قطع کامل عصب ششم', 'راست خارجی هیچ انقباضی ندارد'],
+        ['محدودیت مکانیکی', 'چشم راست حتی از خط وسط هم عبور نمی‌کند'],
+        ['ناتوانی در تثبیت', 'چشم مبتلا نمی‌تواند در میدان فلج، هدف را بگیرد'],
+        ['یافته بالینی', 'ازوتروپی بزرگ و ناهمگون با دوبینی افقی']
+      ] },
+    cn4R: { name: 'فلج عصب چهارم راست', tag: 'هایپرتروپی', R: Mot.weak({ SO: 0.08 }), L: Mot.full(),
+      ptosis: { R: 0, L: 0 }, pupil: { R: 4, L: 4 },
+      bridge: [
+        ['مایل فوقانی', 'تنها عضله‌ای که در ادداکسیون چشم را پایین می‌برد'],
+        ['از دست رفتن پایین‌بری', 'در نگاه به داخل، هیچ عضله‌ای چشم را پایین نمی‌آورد'],
+        ['غلبه مایل تحتانی', 'چشم مبتلا بالاتر می‌ایستد'],
+        ['یافته بالینی', 'هایپرتروپی راست که در نگاه پایین-چپ بیشترین مقدار را دارد']
+      ] },
+    cn3R: { name: 'فلج عصب سوم راست', tag: 'پایین و خارج', R: Mot.weak({ MR: 0.05, SR: 0.05, IR: 0.05, IO: 0.05 }), L: Mot.full(),
+      ptosis: { R: 0.75, L: 0 }, pupil: { R: 7.5, L: 4 },
+      bridge: [
+        ['چهار عضله از کار می‌افتند', 'راست داخلی، راست فوقانی، راست تحتانی و مایل تحتانی'],
+        ['دو عضله سالم می‌مانند', 'راست خارجی و مایل فوقانی'],
+        ['وضعیت استراحت', 'چشم به خارج می‌رود؛ پایین‌رفتن کم است چون مایل فوقانی در ابداکسیون بیشتر می‌چرخاند تا پایین ببرد'],
+        ['یافته بالینی', 'چشم پایین و خارج، پتوز، و مردمک گشاد بی‌پاسخ']
+      ] },
+    inoL: { name: 'افتالموپلژی بین‌هسته‌ای چپ', tag: 'MLF', R: Mot.full(), L: Mot.weak({ MR: 0.25 }),
+      ptosis: { R: 0, L: 0 }, pupil: { R: 4, L: 4 },
+      bridge: [
+        ['دسته طولی داخلی', 'هسته عصب ششم را به هسته سوم طرف مقابل وصل می‌کند'],
+        ['قطع پیام ادداکسیون', 'فرمان نگاه افقی به راست داخلی چپ نمی‌رسد'],
+        ['ابداکسیون سالم', 'راست خارجی چپ از همان هسته ششم خودش فرمان می‌گیرد'],
+        ['یافته بالینی', 'ادداکسیون ناقص چشم چپ در نگاه به راست، با ابداکسیون طبیعی']
+      ] }
+  };
+
+  let key = 'cn6Rp', posKey = 'c', cover = null, eyeSel = 'R';
+  let strengths = null;
+
+  function eyes() {
+    if (!strengths) strengths = { R: Object.assign({}, cases[key].R), L: Object.assign({}, cases[key].L) };
+    return strengths;
+  }
+  function fixatingEye() { return cover === 'R' ? 'L' : 'R'; }
+
+  function solve(pk) {
+    const p = Mot.POSITIONS.find(x => x.k === (pk || posKey));
+    return Mot.gaze(eyes(), { h: p.h, v: p.v }, fixatingEye());
+  }
+
+  function eyePair(prefix, cx, cy, scale) {
+    return `<g>
+      <path d="M ${cx - 40} ${cy - 108} C ${cx} ${cy - 130} ${cx} ${cy - 130} ${cx + 40} ${cy - 108}"
+            fill="none" stroke="#C9C2B5" stroke-width="2" opacity=".0"/>
+      ${Anat.eyeMarkup(prefix + 'R', cx - 152 * scale, cy, scale)}
+      ${Anat.eyeMarkup(prefix + 'L', cx + 152 * scale, cy, scale)}
+    </g>`;
+  }
+
+  function bigSvg() {
+    return `<svg viewBox="0 0 900 450" style="width:100%;height:auto" role="img" aria-label="وضعیت دو چشم">
+      ${Anat.defs}
+      <rect width="900" height="450" fill="#EFEBE3"/>
+      <line x1="70" y1="66" x2="830" y2="66" stroke="#C9C2B5" stroke-width="1.5" stroke-dasharray="5 6"/>
+      <circle id="m-target" cx="450" cy="66" r="13" fill="#C0504A"/>
+      <circle id="m-target2" cx="450" cy="66" r="25" fill="none" stroke="#C0504A" stroke-width="2.5" opacity=".45"/>
+      <text x="450" y="26" text-anchor="middle" font-size="16" fill="#7A8792" font-family="inherit">هدف تثبیت</text>
+      ${eyePair('mb', 450, 262, 1.25)}
+      <rect id="m-occR" x="0" y="0" width="0" height="0" rx="12" fill="#2C3A46" opacity="0"/>
+      <rect id="m-occL" x="0" y="0" width="0" height="0" rx="12" fill="#2C3A46" opacity="0"/>
+      <text x="262" y="404" text-anchor="middle" font-size="19" fill="#3E4C58" font-family="inherit">چشم راست بیمار</text>
+      <text x="638" y="404" text-anchor="middle" font-size="19" fill="#3E4C58" font-family="inherit">چشم چپ بیمار</text>
+      <text x="450" y="436" text-anchor="middle" font-size="15" fill="#9AA6B0" font-family="inherit">نمای معاینه‌کننده روبه‌روی بیمار</text>
+    </svg>`;
+  }
+
+  function gridSvg() {
+    let s = `<svg viewBox="0 0 900 560" style="width:100%;height:auto" role="img" aria-label="نه جهت تشخیصی نگاه">
+      ${Anat.defs}<rect width="900" height="560" fill="#EFEBE3"/>`;
+    Mot.POSITIONS.forEach((p, i) => {
+      const cx = 150 + (i % 3) * 300, cy = 96 + Math.floor(i / 3) * 176;
+      s += `<rect id="mg-box-${p.k}" x="${cx - 138}" y="${cy - 74}" width="276" height="150" rx="8"
+              fill="#F3F0EA" stroke="#C9C2B5" stroke-width="2"/>`;
+      s += eyePair('mg' + p.k, cx, cy, 0.44);
+      s += `<text x="${cx}" y="${cy + 92}" text-anchor="middle" font-size="17" fill="#7A8792" font-family="inherit">${p.fa}</text>`;
+      s += `<text id="mg-dev-${p.k}" x="${cx}" y="${cy - 52}" text-anchor="middle" font-size="17" font-weight="700" fill="#C0504A" font-family="inherit"></text>`;
+    });
+    return s + '</svg>';
+  }
+
+  function paintOne(prefix, g, ptR, ptL, puR, puL) {
+    Anat.paintEye(prefix + 'R', { h: g.R.h, v: g.R.v, pupil: puR, ptosis: ptR });
+    Anat.paintEye(prefix + 'L', { h: g.L.h, v: g.L.v, pupil: puL, ptosis: ptL });
+  }
+
+  function draw() {
+    const c = cases[key];
+    const g = solve();
+    paintOne('mb', g, c.ptosis.R, c.ptosis.L, c.pupil.R, c.pupil.L);
+
+    const p = Mot.POSITIONS.find(x => x.k === posKey);
+    const tx = 450 - p.h * 9.4, ty = 66 - p.v * 1.5;   // mirrored, same reason as the pupils
+    ['m-target', 'm-target2'].forEach(id => {
+      const n = document.getElementById(id);
+      if (n) { n.setAttribute('cx', tx); n.setAttribute('cy', ty); }
+    });
+
+    ['R', 'L'].forEach(s => {
+      const n = document.getElementById('m-occ' + s);
+      if (!n) return;
+      const on = cover === s;
+      const cx = s === 'R' ? 248 : 652;
+      n.setAttribute('x', cx - 132); n.setAttribute('y', 152);
+      n.setAttribute('width', on ? 264 : 0); n.setAttribute('height', on ? 220 : 0);
+      n.setAttribute('opacity', on ? 0.72 : 0);
+    });
+
+    const dh = g.deviation.h, dv = g.deviation.v;
+    el('m-dh').textContent = fa(Math.abs(dh * Mot.PRISM).toFixed(0)) + 'Δ ' + (Math.abs(dh) < 1 ? '' : (dh < 0 ? 'ازو' : 'اگزو'));
+    el('m-dv').textContent = fa(Math.abs(dv * Mot.PRISM).toFixed(0)) + 'Δ ' + (Math.abs(dv) < 1 ? '' : (dv > 0 ? 'هایپر راست' : 'هایپر چپ'));
+    const sep = Math.hypot(dh, dv);
+    el('m-dip').textContent = sep < 1.2 ? 'ندارد' : (Math.abs(dh) > Math.abs(dv) ? 'افقی' : 'عمودی');
+    el('m-fix').textContent = fixatingEye() === 'R' ? 'راست' : 'چپ';
+    el('m-meta').textContent = `${c.name} — نگاه به ${p.fa}` + (cover ? ` — چشم ${cover === 'R' ? 'راست' : 'چپ'} پوشیده` : '');
+
+    Mot.POSITIONS.forEach(q => {
+      const gg = Mot.gaze(eyes(), { h: q.h, v: q.v }, fixatingEye());
+      paintOne('mg' + q.k, gg, c.ptosis.R, c.ptosis.L, c.pupil.R, c.pupil.L);
+      const d = Math.hypot(gg.deviation.h, gg.deviation.v) * Mot.PRISM;
+      const t = document.getElementById('mg-dev-' + q.k);
+      if (t) t.textContent = d < 2 ? '' : fa(d.toFixed(0)) + 'Δ';
+      const b = document.getElementById('mg-box-' + q.k);
+      if (b) {
+        b.setAttribute('stroke', q.k === posKey ? '#27476B' : '#C9C2B5');
+        b.setAttribute('stroke-width', q.k === posKey ? 4 : 2);
+      }
+    });
+    renderBridge(el('m-bridge'), c.bridge);
+    syncMuscles();
+  }
+
+  const MNAMES = { LR: 'راست خارجی', MR: 'راست داخلی', SR: 'راست فوقانی', IR: 'راست تحتانی', IO: 'مایل تحتانی', SO: 'مایل فوقانی' };
+  function syncMuscles() {
+    Mot.MUSCLES.forEach(m => {
+      const inp = el('mm-' + m), lab = el('mmv-' + m);
+      if (inp) inp.value = Math.round(eyes()[eyeSel][m] * 100);
+      if (lab) lab.textContent = fa(Math.round(eyes()[eyeSel][m] * 100)) + '٪';
+    });
+  }
+
+  function pick(k) {
+    key = k;
+    strengths = { R: Object.assign({}, cases[k].R), L: Object.assign({}, cases[k].L) };
+    draw();
+  }
+
+  function init() {
+    el('m-svg').innerHTML = bigSvg();
+    el('m-grid').innerHTML = gridSvg();
+    buildCaseButtons(el('m-cases'), cases, key, pick);
+
+    const pg = el('m-pos');
+    pg.innerHTML = '';
+    Mot.POSITIONS.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'site'; b.type = 'button'; b.textContent = p.fa;
+      b.style.flex = '1 1 30%';
+      b.setAttribute('aria-pressed', String(p.k === posKey));
+      b.addEventListener('click', () => {
+        posKey = p.k;
+        [...pg.children].forEach(c => c.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', 'true');
+        draw();
+      });
+      pg.appendChild(b);
+    });
+
+    const cv = el('m-cover');
+    cv.innerHTML = '';
+    [[null, 'بدون پوشش'], ['R', 'پوشاندن چشم راست'], ['L', 'پوشاندن چشم چپ']].forEach(([v, t]) => {
+      const b = document.createElement('button');
+      b.className = 'btn ghost'; b.type = 'button'; b.textContent = t;
+      b.addEventListener('click', () => { cover = v; draw(); });
+      cv.appendChild(b);
+    });
+
+    const mh = el('m-muscles');
+    mh.innerHTML = `<div class="sites" id="m-eyesel" style="margin-bottom:12px"></div>`;
+    const es = el('m-eyesel');
+    [['R', 'چشم راست'], ['L', 'چشم چپ']].forEach(([v, t]) => {
+      const b = document.createElement('button');
+      b.className = 'site'; b.type = 'button'; b.textContent = t;
+      b.setAttribute('aria-pressed', String(v === eyeSel));
+      b.addEventListener('click', () => {
+        eyeSel = v;
+        [...es.children].forEach(c => c.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', 'true');
+        syncMuscles();
+      });
+      es.appendChild(b);
+    });
+    Mot.MUSCLES.forEach(m => {
+      const d = document.createElement('div');
+      d.className = 'knob';
+      d.innerHTML = `<label>${MNAMES[m]} <span class="val" id="mmv-${m}">۱۰۰٪</span></label>
+                     <input type="range" id="mm-${m}" min="0" max="100" value="100">`;
+      mh.appendChild(d);
+      d.querySelector('input').addEventListener('input', e => {
+        eyes()[eyeSel][m] = +e.target.value / 100;
+        el('mmv-' + m).textContent = fa(e.target.value) + '٪';
+        draw();
+      });
+    });
+    pick(key);
+  }
+
+  return { init: init, draw: draw };
+})();
+
+
+/* ================================================================
+   MODULE — FACIAL NERVE   (channel: animation)
+   ================================================================ */
+const CN7 = (function () {
+
+  const cases = {
+    normal: { name: 'عصب فاسیال سالم', tag: 'شاهد', side: null, upper: 0, lower: 0,
+      bridge: [
+        ['هسته عصب هفتم', 'بخش فوقانی هسته از هر دو نیمکره عصب می‌گیرد، بخش تحتانی فقط از نیمکره مقابل'],
+        ['خروج از سوراخ استیلوماستوئید', 'الیاف حرکتی به تمام عضلات میمیک صورت می‌روند'],
+        ['تقارن', 'هر دو نیمه صورت به یک اندازه حرکت می‌کنند'],
+        ['یافته بالینی', 'چین‌های پیشانی، بستن چشم و لبخند، همه قرینه‌اند']
+      ] },
+    lmnR: { name: 'فلج محیطی راست (بل)', tag: 'پیشانی درگیر', side: 'R', upper: 0.92, lower: 0.92,
+      bridge: [
+        ['ضایعه بعد از هسته', 'عصب هفتم در مسیر محیطی خود آسیب می‌بیند'],
+        ['تمام عضلات یک طرف', 'چون همه الیاف از یک تنه عصبی می‌گذرند، بالا و پایین با هم درگیر می‌شوند'],
+        ['از دست رفتن فرونتالیس', 'پیشانی همان سمت صاف می‌ماند'],
+        ['یافته بالینی', 'پیشانی بی‌چین، ناتوانی در بستن چشم با پدیده بل، و افتادگی گوشه دهان']
+      ] },
+    umnR: { name: 'فلج مرکزی راست (سکته)', tag: 'پیشانی سالم', side: 'R', upper: 0.06, lower: 0.9,
+      bridge: [
+        ['ضایعه بالای هسته', 'مسیر کورتیکوبولبار نیمکره چپ آسیب می‌بیند'],
+        ['عصب‌دهی دوطرفه بالای صورت', 'بخش فوقانی هسته از نیمکره سالم هم پیام می‌گیرد'],
+        ['بخش تحتانی محروم می‌شود', 'فقط عضلات نیمه پایینی صورت مقابل ضعیف می‌شوند'],
+        ['یافته بالینی', 'دهان می‌افتد اما پیشانی چین می‌خورد — همان نشانه‌ای که مرکزی را از محیطی جدا می‌کند']
+      ] }
+  };
+
+  const tasks = {
+    rest:  { fa: 'در حال استراحت', browRaise: 0, au43: 0, smile: 0, puff: 0 },
+    brows: { fa: 'ابروها را بالا ببرید', browRaise: 1, au43: 0, smile: 0, puff: 0 },
+    close: { fa: 'چشم‌ها را محکم ببندید', browRaise: 0, au43: 1, smile: 0, puff: 0, au6: 0.9, bell: true },
+    smile: { fa: 'دندان‌ها را نشان دهید', browRaise: 0, au43: 0, smile: 1, puff: 0 },
+    puff:  { fa: 'لپ‌ها را باد کنید', browRaise: 0, au43: 0, smile: 0, puff: 1, jaw: 0.15 }
+  };
+
+  let key = 'lmnR', task = 'brows', sev = 0.92;
+
+  function state() {
+    const c = cases[key], t = tasks[task];
+    const w = { side: c.side, upper: c.upper * (sev / 0.92), lower: c.lower * (sev / 0.92) };
+    w.upper = Math.min(1, w.upper); w.lower = Math.min(1, w.lower);
+    return { c: c, t: t, w: w };
+  }
+
+  function draw() {
+    const s = state();
+    const f = {
+      browRaise: s.t.browRaise, au43: s.t.au43, au6: s.t.au6 || 0,
+      smile: s.t.smile, puff: s.t.puff, jaw: s.t.jaw || 0,
+      weak: s.w, bell: !!s.t.bell,
+      mouthPull: s.c.side ? (s.c.side === 'R' ? 1 : -1) * s.w.lower * 0.6 : 0
+    };
+    Anat.paintFace('c7f', f);
+
+    const upperOK = 1 - s.w.upper, lowerOK = 1 - s.w.lower;
+    el('c7-forehead').textContent = s.c.side ? (upperOK > 0.6 ? 'چین می‌خورد' : 'صاف می‌ماند') : 'قرینه';
+    el('c7-eye').textContent = s.c.side ? (upperOK > 0.6 ? 'کامل بسته می‌شود' : 'ناقص — پدیده بل') : 'کامل';
+    el('c7-mouth').textContent = s.c.side ? (lowerOK > 0.6 ? 'قرینه' : 'افتاده') : 'قرینه';
+    el('c7-meta').textContent = s.c.name + ' — ' + s.t.fa;
+
+    const verdict = el('c7-verdict');
+    if (!s.c.side) verdict.innerHTML = 'هر دو نیمه صورت قرینه حرکت می‌کنند.';
+    else if (task !== 'brows') verdict.innerHTML =
+      'برای جدا کردن مرکزی از محیطی، باید <strong>بالا بردن ابرو</strong> را بخواهید؛ نیمه پایینی صورت در هر دو حالت می‌افتد.';
+    else verdict.innerHTML = upperOK > 0.6
+      ? 'پیشانی سمت مبتلا هم چین می‌خورد: ضایعه <strong>بالای هسته</strong> است.'
+      : 'پیشانی سمت مبتلا صاف مانده: ضایعه <strong>محیطی</strong> است.';
+    verdict.className = 'say' + (s.c.side ? '' : ' quiet');
+    renderBridge(el('c7-bridge'), s.c.bridge);
+  }
+
+  function init() {
+    el('c7-svg').innerHTML = `<svg viewBox="0 0 360 400" style="width:100%;height:auto" role="img" aria-label="صورت بیمار">
+      ${Anat.defs}<rect width="360" height="400" fill="#EFEBE3"/>${Anat.faceMarkup('c7f', 0, 4, 1)}</svg>`;
+    buildCaseButtons(el('c7-cases'), cases, key, k => { key = k; sev = cases[k].lower || 0.92; el('c7-sev').value = Math.round(sev * 100); el('c7-sev-v').textContent = fa(Math.round(sev * 100)) + '٪'; draw(); });
+    const th = el('c7-tasks');
+    th.innerHTML = '';
+    Object.keys(tasks).forEach(k => {
+      const b = document.createElement('button');
+      b.className = 'site'; b.type = 'button'; b.textContent = tasks[k].fa;
+      b.style.flex = '1 1 46%';
+      b.setAttribute('aria-pressed', String(k === task));
+      b.addEventListener('click', () => {
+        task = k;
+        [...th.children].forEach(c => c.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', 'true');
+        draw();
+      });
+      th.appendChild(b);
+    });
+    el('c7-sev').addEventListener('input', e => {
+      sev = +e.target.value / 100;
+      el('c7-sev-v').textContent = fa(e.target.value) + '٪';
+      draw();
+    });
+    draw();
+  }
+
+  return { init: init };
+})();
+
+
+/* ================================================================
+   MODULE 4 — 12-LEAD ECG  (channel: computed signal)
+   A single moving cardiac dipole is projected onto each lead axis.
+   Reciprocal change is therefore an output of the model, not a
+   pattern drawn in by hand.
+   ================================================================ */
+const Ecg = (function(){
+
+  const leads = [
+    { n: 'I',   p: 'F', a: 0 },   { n: 'aVR', p: 'F', a: -150 }, { n: 'V1', p: 'H', a: 115 }, { n: 'V4', p: 'H', a: 48 },
+    { n: 'II',  p: 'F', a: 60 },  { n: 'aVL', p: 'F', a: -30 },  { n: 'V2', p: 'H', a: 94 },  { n: 'V5', p: 'H', a: 24 },
+    { n: 'III', p: 'F', a: 120 }, { n: 'aVF', p: 'F', a: 90 },   { n: 'V3', p: 'H', a: 73 },  { n: 'V6', p: 'H', a: 0 }
+  ];
+
+  const cases = {
+    sinus: {
+      name: 'ریتم سینوسی طبیعی', tag: 'شاهد',
+      cfg: { hr: 75, axis: 60, pr: 0.16, qrsW: 0.09, rhythm: 'sinus', st: 0, fF: 0, fH: 0, angF: 90, angH: 90, vrate: 0, arate: 0 },
+      bridge: [
+        ['گره سینوسی', 'دپلاریزاسیون از دهلیز راست فوقانی آغاز می‌شود'],
+        ['بردار دهلیزی', 'جهت کلی به سمت پایین و چپ است، پس موج P در اشتقاق II مثبت است'],
+        ['هدایت بطنی', 'سیستم هیس-پورکنژ، دپلاریزاسیون هم‌زمان و باریک می‌سازد'],
+        ['یافته بالینی', 'QRS باریک، محور بین صفر تا ۹۰ درجه، P منفی در aVR']
+      ]
+    },
+    inferior: {
+      name: 'انفارکتوس تحتانی', tag: 'ST تحتانی',
+      cfg: { hr: 62, axis: 55, pr: 0.17, qrsW: 0.09, rhythm: 'sinus', st: 0.38, fF: 1, fH: 0.18, angF: 100, angH: -60, vrate: 0, arate: 0 },
+      bridge: [
+        ['شریان کرونر راست', 'انسداد، خون‌رسانی دیواره تحتانی بطن چپ را قطع می‌کند'],
+        ['جریان آسیب', 'میوکارد ایسکمیک در دیاستول نسبت به بافت سالم تفاوت پتانسیل دارد'],
+        ['بردار آسیب', 'بردار حاصل به سمت ناحیه آسیب یعنی پایین و کمی راست است'],
+        ['یافته بالینی', 'صعود ST در II و III و aVF؛ نزول متقابل در I و aVL به‌طور خودکار']
+      ]
+    },
+    anterior: {
+      name: 'انفارکتوس قدامی', tag: 'ST پیش‌کوردیال',
+      cfg: { hr: 88, axis: 40, pr: 0.15, qrsW: 0.10, rhythm: 'sinus', st: 0.45, fF: 0.22, fH: 1, angF: -30, angH: 90, vrate: 0, arate: 0 },
+      bridge: [
+        ['شاخه نزولی قدامی چپ', 'انسداد پروگزیمال، دیواره قدامی و سپتوم را درگیر می‌کند'],
+        ['موقعیت آسیب', 'ناحیه آسیب در سطح قدامی قلب و نزدیک الکترودهای سینه‌ای است'],
+        ['بردار آسیب رو به جلو', 'تصویر این بردار روی V2 تا V4 بیشترین مقدار را دارد'],
+        ['یافته بالینی', 'صعود ST در اشتقاق‌های پیش‌کوردیال با حداقل تغییر در اشتقاق‌های اندامی']
+      ]
+    },
+    af: {
+      name: 'فیبریلاسیون دهلیزی', tag: 'نامنظم',
+      cfg: { hr: 112, axis: 55, pr: 0.16, qrsW: 0.09, rhythm: 'af', st: 0, fF: 0, fH: 0, angF: 90, angH: 90, vrate: 0, arate: 0 },
+      bridge: [
+        ['بازآرایی دهلیزی', 'فیبروز و اتساع دهلیز، مدارهای بازگشتی متعدد می‌سازد'],
+        ['فعالیت آشفته دهلیز', 'بردار منسجم دهلیزی وجود ندارد، پس موج P ساخته نمی‌شود'],
+        ['فیلتر گره AV', 'هدایت تصادفی به بطن‌ها می‌رسد'],
+        ['یافته بالینی', 'خط پایه مواج، فقدان P، و فاصله R تا R کاملاً نامنظم']
+      ]
+    },
+    chb: {
+      name: 'بلوک کامل دهلیزی-بطنی', tag: 'تفکیک',
+      cfg: { hr: 38, axis: 20, pr: 0.16, qrsW: 0.15, rhythm: 'chb', st: 0, fF: 0, fH: 0, angF: 90, angH: 90, vrate: 38, arate: 84 },
+      bridge: [
+        ['وقفه در گره AV یا هیس', 'هیچ پیام دهلیزی به بطن نمی‌رسد'],
+        ['پیس‌میکر فراری', 'کانون پایین‌دست با سرعت ذاتی خودش شروع به کار می‌کند'],
+        ['هدایت خارج از سیستم هیس', 'انتشار سلول به سلول کند است، پس QRS پهن می‌شود'],
+        ['یافته بالینی', 'موج‌های P منظم و مستقل، QRS منظم و کندتر، بدون رابطه ثابت']
+      ]
+    }
+  };
+
+  let key = 'sinus';
+  let cfg = Object.assign({}, cases.sinus.cfg);
+
+  const DUR = 10, SR = 500, N = DUR * SR;
+
+  function gauss(x, w){ const z = x / w; return Math.exp(-0.5 * z * z); }
+
+  function beatList(){
+    const rnd = mulberry(24601);
+    const q = [], pw = [];
+    if (cfg.rhythm === 'chb') {
+      const vRR = 60 / Math.max(20, cfg.vrate || cfg.hr);
+      const aRR = 60 / Math.max(30, cfg.arate || 80);
+      for (let t = 0.5; t < DUR; t += vRR) q.push({ t: t, wide: true, p: null });
+      for (let t = 0.2; t < DUR; t += aRR) pw.push(t);
+    } else if (cfg.rhythm === 'af') {
+      let t = 0.4;
+      const base = 60 / cfg.hr;
+      while (t < DUR) { q.push({ t: t, wide: false, p: null }); t += base * (0.62 + 0.80 * rnd()); }
+    } else {
+      const RR = 60 / cfg.hr;
+      for (let t = 0.5; t < DUR; t += RR) { q.push({ t: t, wide: false, p: t - cfg.pr }); pw.push(t - cfg.pr); }
+    }
+    return { q, pw };
+  }
+
+  function project(angF, angH, lead){
+    return Math.cos(deg((lead.p === 'F' ? angF : angH) - lead.a));
+  }
+
+  // one beat's contribution, in mV, at time offset x from QRS onset
+  function beatValue(x, b, lead, rr){
+    const f = (b.wide ? cfg.qrsW * 1.75 : cfg.qrsW) / 0.09;
+    let v = 0;
+    const A = cfg.axis;
+    // QRS
+    v += 0.09 * project(A + 165, 100, lead) * gauss(x - 0.012 * f, 0.007 * f);
+    v += 1.15 * project(A, -25, lead) * gauss(x - 0.036 * f, 0.016 * f);
+    v += 0.32 * project(A + 175, 200, lead) * gauss(x - 0.064 * f, 0.014 * f);
+    // T
+    const tT = 0.055 + 0.28 * Math.sqrt(Math.max(0.3, rr));
+    const wT = 0.048 * Math.sqrt(Math.max(0.3, rr) / 0.8);
+    const tAxF = b.wide ? A + 170 : A - 8;          // escape beats have discordant T
+    const tAmp = b.wide ? 0.42 : 0.30;
+    v += tAmp * project(tAxF, b.wide ? 160 : 20, lead) * gauss(x - tT, wT);
+    // injury current -> ST offset
+    if (cfg.st > 0) {
+      const J = 0.078 * f, endT = tT + 2.0 * wT;
+      if (x > J && x < endT) {
+        let s = Math.min(1, (x - J) / 0.022);
+        const tail = (x - (endT - 0.10)) / 0.10;
+        if (tail > 0) s *= Math.max(0, 1 - tail * 0.55);
+        const injProj = (lead.p === 'F')
+          ? cfg.fF * Math.cos(deg(cfg.angF - lead.a))
+          : cfg.fH * Math.cos(deg(cfg.angH - lead.a));
+        v += cfg.st * s * injProj;
+      }
+    }
+    return v;
+  }
+
+  function pValue(x, lead){
+    return 0.13 * project(55, 30, lead) * gauss(x, 0.024);
+  }
+
+  function build(lead){
+    const buf = new Float32Array(N);
+    const { q, pw } = beatList();
+    for (let i = 0; i < q.length; i++) {
+      const b = q[i];
+      const rr = (i + 1 < q.length) ? (q[i + 1].t - b.t) : (i > 0 ? b.t - q[i - 1].t : 0.8);
+      const i0 = Math.max(0, Math.round((b.t - 0.05) * SR));
+      const i1 = Math.min(N, Math.round((b.t + 0.62) * SR));
+      for (let j = i0; j < i1; j++) buf[j] += beatValue(j / SR - b.t, b, lead, rr);
+    }
+    for (let k = 0; k < pw.length; k++) {
+      const t = pw[k];
+      const i0 = Math.max(0, Math.round((t - 0.09) * SR));
+      const i1 = Math.min(N, Math.round((t + 0.09) * SR));
+      for (let j = i0; j < i1; j++) buf[j] += pValue(j / SR - t, lead);
+    }
+    if (cfg.rhythm === 'af') {
+      const rnd = mulberry(99991 + Math.round(lead.a));
+      const w = (lead.n === 'V1' ? 2.3 : (lead.p === 'F' ? 1 : 0.6));
+      let prev = 0;
+      for (let j = 0; j < N; j++) {
+        const s = 0.055 * w * Math.sin(2 * Math.PI * 7.2 * j / SR + lead.a) * (0.55 + 0.9 * rnd());
+        prev = prev * 0.6 + s * 0.4;
+        buf[j] += prev;
+      }
+    }
+    return buf;
+  }
+
+  /* ---- drawing ---- */
+  const MM = 3.6, PXS = MM * 25, PXMV = MM * 10;
+
+  function grid(g, W, H){
+    g.fillStyle = '#FDF6F1'; g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(200,110,96,.32)'; g.lineWidth = 1;
+    g.beginPath();
+    for (let x = 0; x <= W; x += MM) { g.moveTo(Math.round(x) + .5, 0); g.lineTo(Math.round(x) + .5, H); }
+    for (let y = 0; y <= H; y += MM) { g.moveTo(0, Math.round(y) + .5); g.lineTo(W, Math.round(y) + .5); }
+    g.stroke();
+    g.strokeStyle = 'rgba(190,84,68,.55)'; g.lineWidth = 1.1;
+    g.beginPath();
+    for (let x = 0; x <= W; x += MM * 5) { g.moveTo(Math.round(x) + .5, 0); g.lineTo(Math.round(x) + .5, H); }
+    for (let y = 0; y <= H; y += MM * 5) { g.moveTo(0, Math.round(y) + .5); g.lineTo(W, Math.round(y) + .5); }
+    g.stroke();
+  }
+
+  function draw(){
+    const c = el('ecg'); if (!c) return;
+    const g = c.getContext('2d'), W = c.width, H = c.height;
+    grid(g, W, H);
+    const colW = (W - 16) / 4, rowH = 140, top = 16;
+    g.lineWidth = 1.7; g.lineJoin = 'round';
+
+    leads.forEach((L, idx) => {
+      const col = idx % 4, row = Math.floor(idx / 4);
+      const x0 = 8 + col * colW, base = top + row * rowH + rowH / 2;
+      const buf = build(L);
+      const tOff = col * 2.5;
+      g.strokeStyle = '#1A1A1A';
+      g.beginPath();
+      for (let px = 0; px < colW - 6; px++) {
+        const t = tOff + px / PXS;
+        const s = buf[Math.min(N - 1, Math.round(t * SR))];
+        const y = base - s * PXMV;
+        if (px === 0) g.moveTo(x0 + px, y); else g.lineTo(x0 + px, y);
+      }
+      g.stroke();
+      g.fillStyle = '#16212A'; g.font = '600 14px system-ui, sans-serif';
+      g.fillText(L.n, x0 + 4, top + row * rowH + 22);
+      if (col > 0) {
+        g.strokeStyle = 'rgba(22,33,42,.35)'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(x0 - 3, top + row * rowH + 14); g.lineTo(x0 - 3, top + row * rowH + rowH - 14); g.stroke();
+        g.lineWidth = 1.7;
+      }
+    });
+
+    // rhythm strip: lead II, full ten seconds
+    const rb = top + 3 * rowH + 62;
+    const buf2 = build(leads[4]);
+    g.strokeStyle = '#1A1A1A'; g.lineWidth = 1.7;
+    g.beginPath();
+    const px2s = (W - 46) / DUR;
+    for (let px = 0; px < W - 46; px++) {
+      const t = px / px2s;
+      const s = buf2[Math.min(N - 1, Math.round(t * SR))];
+      const y = rb - s * PXMV;
+      if (px === 0) g.moveTo(38 + px, y); else g.lineTo(38 + px, y);
+    }
+    g.stroke();
+    // calibration pulse, one millivolt
+    g.beginPath();
+    g.moveTo(8, rb); g.lineTo(16, rb); g.lineTo(16, rb - PXMV); g.lineTo(30, rb - PXMV); g.lineTo(30, rb); g.lineTo(36, rb);
+    g.stroke();
+    g.fillStyle = '#16212A'; g.font = '600 14px system-ui, sans-serif';
+    g.fillText('II — نوار ریتم ۱۰ ثانیه', 40, top + 3 * rowH + 26);
+    renderBridge(el('e-bridge'), cases[key].bridge);
+  }
+
+  function syncKnobs(){
+    el('e-hr').value = cfg.hr; el('e-hr-v').textContent = fa(cfg.hr);
+    el('e-axis').value = cfg.axis; el('e-axis-v').textContent = fa(cfg.axis) + '°';
+    el('e-st').value = Math.round(cfg.st * 100); el('e-st-v').textContent = fa(cfg.st.toFixed(2)) + ' mV';
+    const ang = cfg.fH >= cfg.fF ? cfg.angH : cfg.angF;
+    el('e-inj').value = ang; el('e-inj-v').textContent = fa(Math.round(ang)) + '°';
+  }
+
+  function init(){
+    buildCaseButtons(el('e-cases'), cases, key, k => {
+      key = k; cfg = Object.assign({}, cases[k].cfg); syncKnobs(); draw();
+    });
+    el('e-hr').addEventListener('input', e => {
+      cfg.hr = +e.target.value; if (cfg.rhythm === 'chb') cfg.vrate = cfg.hr;
+      el('e-hr-v').textContent = fa(cfg.hr); draw();
+    });
+    el('e-axis').addEventListener('input', e => { cfg.axis = +e.target.value; el('e-axis-v').textContent = fa(cfg.axis) + '°'; draw(); });
+    el('e-st').addEventListener('input', e => {
+      cfg.st = +e.target.value / 100;
+      if (cfg.st > 0 && cfg.fF === 0 && cfg.fH === 0) { cfg.fF = 1; cfg.fH = 0.2; }
+      el('e-st-v').textContent = fa(cfg.st.toFixed(2)) + ' mV'; draw();
+    });
+    el('e-inj').addEventListener('input', e => {
+      const v = +e.target.value;
+      if (cfg.fH >= cfg.fF) cfg.angH = v; else cfg.angF = v;
+      el('e-inj-v').textContent = fa(v) + '°'; draw();
+    });
+    syncKnobs(); draw();
+  }
+
+  return { init, draw };
+})();
+
+/* ================================================================
+   shell
+   ================================================================ */
+(function(){
+  const tabs = [...document.querySelectorAll('.tab')];
+  function select(t){
+    tabs.forEach(x => {
+      const on = x === t;
+      x.setAttribute('aria-selected', String(on));
+      document.getElementById(x.getAttribute('aria-controls')).classList.toggle('on', on);
+    });
+    if (t.id !== 'tab-cardio') Cardio.stop();
+    if (t.id === 'tab-ecg') Ecg.draw();
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const d = (e.key === 'ArrowLeft') ? 1 : -1;   // RTL: left arrow moves forward
+        const n = tabs[(i + d + tabs.length) % tabs.length];
+        n.focus(); select(n); e.preventDefault();
+      }
+    });
+  });
+  Cardio.init(); Neuro.init(); Moti.init(); CN7.init(); Abdo.init(); Ecg.init();
+})();
+
+</script>
+</body>
+</html>
